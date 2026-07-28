@@ -11,6 +11,7 @@ A TypeScript implementation of a Pokémon Trading Card Game rules engine with a 
 ## Development
 
 ```bash
+cd ts
 pnpm install
 pnpm test         # Run all tests
 pnpm dev          # Start dev servers
