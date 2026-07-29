@@ -1,0 +1,83 @@
+import { GameState, Action, ActionHandler, Card } from "../types";
+
+// Card registry lookup - set during testing to validate energy types
+let testCardRegistry: Map<string, Card> | null = null;
+
+export function setCardRegistry(registry: Map<string, Card> | null) {
+  testCardRegistry = registry;
+}
+
+export const attachEnergyHandler: ActionHandler = {
+  isLegal(state: GameState, action: Action): boolean {
+    if (action.type !== "attachEnergy") return false;
+
+    // Only one energy per turn
+    if (state.players[action.player].energyAttachedThisTurn) return false;
+
+    // Only active player can play during main phase
+    if (action.player !== state.activePlayer) return false;
+    if (state.phase !== "main") return false;
+
+    const player = state.players[action.player];
+
+    // Card must exist in hand
+    const card = player.hand.find((c) => c.cardId === action.energyCardId);
+    if (!card) return false;
+
+    // Validate card is energy type if registry available
+    // Card registry validation pending phase 9
+    if (testCardRegistry) {
+      const cardDef = testCardRegistry.get(action.energyCardId);
+      if (!cardDef || cardDef.type !== "energy") return false;
+    }
+
+    // Find target in bench or active
+    const target =
+      (player.active?.card.instanceId === action.targetInstanceId ? player.active : null) ||
+      player.bench.find((p) => p.card.instanceId === action.targetInstanceId);
+    if (!target) return false;
+
+    return true;
+  },
+
+  apply(state: GameState, action: Action): GameState {
+    const player = state.players[action.player];
+    const cardInstance = player.hand.find((c) => c.cardId === action.energyCardId)!;
+
+    // Find and attach to target
+    const newActive = player.active?.card.instanceId === action.targetInstanceId
+      ? {
+          ...player.active,
+          attachedEnergy: [...player.active.attachedEnergy, cardInstance],
+        }
+      : player.active;
+
+    const newBench = player.bench.map((p) =>
+      p.card.instanceId === action.targetInstanceId
+        ? { ...p, attachedEnergy: [...p.attachedEnergy, cardInstance] }
+        : p
+    );
+
+    return {
+      ...state,
+      players: {
+        ...state.players,
+        [action.player]: {
+          ...player,
+          hand: player.hand.filter((c) => c !== cardInstance),
+          active: newActive,
+          bench: newBench,
+          energyAttachedThisTurn: true,
+        },
+      },
+      log: [
+        ...state.log,
+        {
+          timestamp: Date.now(),
+          player: action.player,
+          message: `${action.player} attached energy`,
+        },
+      ],
+    };
+  },
+};
