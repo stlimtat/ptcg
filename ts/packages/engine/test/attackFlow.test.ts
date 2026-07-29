@@ -209,15 +209,17 @@ describe("Attack flow", () => {
       attachedTools: [],
       statusConditions: [],
     };
-    state.players.p2.prizes = [
+    state.players.p1.prizes = [
       { id: "prize-1", cardId: "card-1", instanceId: "prize-1-inst" },
       { id: "prize-2", cardId: "card-2", instanceId: "prize-2-inst" },
     ];
 
     const newState = resolveAttack(state, "p1", 0);
 
+    // p1 takes 1 prize when KO occurs
     expect(newState.players.p1.prizes).toHaveLength(1);
-    expect(newState.players.p2.prizes).toHaveLength(1);
+    // p2's prizes are unchanged (p2 is the one KO'd)
+    expect(newState.players.p2.prizes).toHaveLength(0);
   });
 
   it("game ends when player's prizes reach 0", () => {
@@ -240,13 +242,21 @@ describe("Attack flow", () => {
       attachedTools: [],
       statusConditions: [],
     };
-    // Only 1 prize left for p2
-    state.players.p2.prizes = [{ id: "prize-1", cardId: "card-1", instanceId: "prize-1-inst" }];
+    // Only 1 prize left for p1 to collect
+    state.players.p1.prizes = [{ id: "prize-1", cardId: "card-1", instanceId: "prize-1-inst" }];
+    // p2 starts with full prizes
+    state.players.p2.prizes = [
+      { id: "p2-prize-1", cardId: "card-2", instanceId: "p2-prize-1-inst" },
+      { id: "p2-prize-2", cardId: "card-3", instanceId: "p2-prize-2-inst" },
+    ];
 
     const newState = resolveAttack(state, "p1", 0);
 
-    expect(newState.players.p2.prizes).toHaveLength(0);
+    // p1 has taken their last prize
+    expect(newState.players.p1.prizes).toHaveLength(0);
     expect(newState.winner).toBe("p1");
+    // p2's prizes are unchanged
+    expect(newState.players.p2.prizes).toHaveLength(2);
   });
 
   it("uses attack data from registry", () => {

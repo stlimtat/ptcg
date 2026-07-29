@@ -93,14 +93,11 @@ export function resolveAttack(
         },
       };
 
-      // Step 5b: Award 1 prize card to attacker from defender
-      const defenderName = attacker === "p1" ? "p2" : "p1";
-      const defenderUpdated = newState.players[defenderName];
+      // Step 5b: Award 1 prize card to attacker
+      // The attacker takes one prize card from their own prize pile
       const awardPlayer = newState.players[attacker];
-
-      if (defenderUpdated.prizes.length > 0) {
-        const prizeTaken = defenderUpdated.prizes[0];
-        const remainingDefenderPrizes = defenderUpdated.prizes.slice(1);
+      if (awardPlayer.prizes.length > 0) {
+        const remainingAttackerPrizes = awardPlayer.prizes.slice(1);
 
         newState = {
           ...newState,
@@ -108,17 +105,13 @@ export function resolveAttack(
             ...newState.players,
             [attacker]: {
               ...awardPlayer,
-              prizes: [...awardPlayer.prizes, prizeTaken],
-            },
-            [defenderName]: {
-              ...defenderUpdated,
-              prizes: remainingDefenderPrizes,
+              prizes: remainingAttackerPrizes,
             },
           },
         };
 
-        // Step 6: Check for game over (defender has no prizes left)
-        if (remainingDefenderPrizes.length === 0) {
+        // Step 6: Check for game over (attacker has collected all their prizes)
+        if (remainingAttackerPrizes.length === 0) {
           newState = {
             ...newState,
             phase: "gameOver",
