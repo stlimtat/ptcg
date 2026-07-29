@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { GameState } from "./types";
 
 function shuffle<T>(array: T[]): T[] {
@@ -19,11 +20,10 @@ export function createInitialState(
     phase: "setup",
     players: {
       p1: {
-        deck: shuffle(p1DeckCardIds).map((cardId) => ({
-          id: cardId,
-          cardId,
-          instanceId: `${cardId}-${Math.random()}`,
-        })),
+        deck: shuffle(p1DeckCardIds).map((cardId) => {
+          const id = randomUUID();
+          return { id, cardId, instanceId: id };
+        }),
         hand: [],
         discard: [],
         prizes: [],
@@ -33,11 +33,10 @@ export function createInitialState(
         supporterPlayedThisTurn: false,
       },
       p2: {
-        deck: shuffle(p2DeckCardIds).map((cardId) => ({
-          id: cardId,
-          cardId,
-          instanceId: `${cardId}-${Math.random()}`,
-        })),
+        deck: shuffle(p2DeckCardIds).map((cardId) => {
+          const id = randomUUID();
+          return { id, cardId, instanceId: id };
+        }),
         hand: [],
         discard: [],
         prizes: [],
