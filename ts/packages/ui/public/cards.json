@@ -1,0 +1,1254 @@
+{
+  "cards": [
+    {
+      "type": "pokemon",
+      "id": "dusknoir",
+      "name": "Dusknoir",
+      "hp": 140,
+      "stage": 1,
+      "evolvesFrom": "Duskull",
+      "types": ["Darkness"],
+      "weakness": {
+        "type": "Fairy",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [
+        {
+          "name": "Shadow Lugia",
+          "effect": []
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Shadow Impact",
+          "cost": ["Darkness", "Colorless", "Colorless"],
+          "baseDamage": 150,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 150,
+              "target": "defender"
+            },
+            {
+              "op": "custom",
+              "fn": "disruptHand"
+            }
+          ]
+        },
+        {
+          "name": "Poltergeist",
+          "cost": ["Darkness", "Darkness"],
+          "baseDamage": 60,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 60,
+              "target": "defender"
+            },
+            {
+              "op": "custom",
+              "fn": "damagePerHandCard"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "duskull",
+      "name": "Duskull",
+      "hp": 80,
+      "stage": 0,
+      "types": ["Darkness"],
+      "weakness": {
+        "type": "Fairy",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [],
+      "attacks": [
+        {
+          "name": "Will-O-Wisp",
+          "cost": ["Darkness", "Colorless"],
+          "baseDamage": 20,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 20,
+              "target": "defender"
+            },
+            {
+              "op": "flipCoin",
+              "onHeads": [
+                {
+                  "op": "applyStatus",
+                  "condition": "Paralyzed",
+                  "target": "defender"
+                }
+              ],
+              "onTails": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "crobat-ex",
+      "name": "Crobat ex",
+      "hp": 230,
+      "stage": 2,
+      "evolvesFrom": "Golbat",
+      "types": ["Darkness"],
+      "weakness": {
+        "type": "Lightning",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [
+        {
+          "name": "Vampire Draw",
+          "effect": [
+            {
+              "op": "custom",
+              "fn": "vampireDraw"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Venomous Fang",
+          "cost": ["Darkness", "Colorless"],
+          "baseDamage": 130,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 130,
+              "target": "defender"
+            },
+            {
+              "op": "applyStatus",
+              "condition": "Poisoned",
+              "target": "defender"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "giratina",
+      "name": "Giratina",
+      "hp": 160,
+      "stage": 0,
+      "types": ["Dragon"],
+      "weakness": {
+        "type": "Dragon",
+        "mult": 2
+      },
+      "resistance": {
+        "type": "Fairy",
+        "reduce": 30
+      },
+      "retreatCost": 3,
+      "abilities": [
+        {
+          "name": "Distortion Gate",
+          "effect": [
+            {
+              "op": "custom",
+              "fn": "distortionGate"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Spectral Void",
+          "cost": ["Dragon", "Colorless", "Colorless"],
+          "baseDamage": 110,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 110,
+              "target": "defender"
+            },
+            {
+              "op": "custom",
+              "fn": "discardTrainerCards"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "lugia-ex",
+      "name": "Lugia ex",
+      "hp": 200,
+      "stage": 0,
+      "types": ["Colorless"],
+      "weakness": {
+        "type": "Lightning",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [
+        {
+          "name": "Tempest",
+          "effect": [
+            {
+              "op": "custom",
+              "fn": "tempestAbility"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Aerial Ace",
+          "cost": ["Colorless", "Colorless"],
+          "baseDamage": 80,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 80,
+              "target": "defender"
+            }
+          ]
+        },
+        {
+          "name": "Hurricane",
+          "cost": ["Colorless", "Colorless", "Colorless", "Colorless"],
+          "baseDamage": 180,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 180,
+              "target": "defender"
+            },
+            {
+              "op": "flipCoin",
+              "onHeads": [
+                {
+                  "op": "custom",
+                  "fn": "returnToHand"
+                }
+              ],
+              "onTails": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "ho-oh-ex",
+      "name": "Ho-Oh ex",
+      "hp": 190,
+      "stage": 0,
+      "types": ["Fire"],
+      "weakness": {
+        "type": "Water",
+        "mult": 2
+      },
+      "resistance": {
+        "type": "Metal",
+        "reduce": 30
+      },
+      "retreatCost": 3,
+      "abilities": [
+        {
+          "name": "Sacred Fire",
+          "effect": [
+            {
+              "op": "custom",
+              "fn": "sacredFireAbility"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Sky Legend",
+          "cost": ["Fire", "Colorless", "Colorless"],
+          "baseDamage": 150,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 150,
+              "target": "defender"
+            },
+            {
+              "op": "custom",
+              "fn": "benchDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "charizard-ex",
+      "name": "Charizard ex",
+      "hp": 230,
+      "stage": 2,
+      "evolvesFrom": "Charmeleon",
+      "types": ["Fire"],
+      "weakness": {
+        "type": "Water",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [
+        {
+          "name": "Trinity Burn",
+          "effect": []
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Blaze Impact",
+          "cost": ["Fire", "Colorless", "Colorless"],
+          "baseDamage": 210,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 210,
+              "target": "defender"
+            },
+            {
+              "op": "discardEnergy",
+              "from": "self",
+              "count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "venusaur-ex",
+      "name": "Venusaur ex",
+      "hp": 250,
+      "stage": 2,
+      "evolvesFrom": "Ivysaur",
+      "types": ["Grass"],
+      "weakness": {
+        "type": "Fire",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [
+        {
+          "name": "Solar Power",
+          "effect": [
+            {
+              "op": "drawCards",
+              "count": 1
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Solar Beam",
+          "cost": ["Grass", "Grass", "Colorless"],
+          "baseDamage": 160,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 160,
+              "target": "defender"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "blastoise-ex",
+      "name": "Blastoise ex",
+      "hp": 240,
+      "stage": 2,
+      "evolvesFrom": "Wartortle",
+      "types": ["Water"],
+      "weakness": {
+        "type": "Lightning",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [
+        {
+          "name": "Hydro Pump",
+          "effect": [
+            {
+              "op": "custom",
+              "fn": "hydroPumpScaling"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Tidal Wave",
+          "cost": ["Water", "Colorless", "Colorless"],
+          "baseDamage": 130,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 130,
+              "target": "allBench"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "alakazam-ex",
+      "name": "Alakazam ex",
+      "hp": 210,
+      "stage": 2,
+      "evolvesFrom": "Kadabra",
+      "types": ["Psychic"],
+      "weakness": {
+        "type": "Darkness",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [
+        {
+          "name": "Psychic Transfer",
+          "effect": [
+            {
+              "op": "custom",
+              "fn": "psychicTransfer"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Telekinetic Blast",
+          "cost": ["Psychic", "Psychic"],
+          "baseDamage": 60,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 60,
+              "target": "defender"
+            },
+            {
+              "op": "custom",
+              "fn": "damageTargetOfChoice"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "machamp-ex",
+      "name": "Machamp ex",
+      "hp": 260,
+      "stage": 2,
+      "evolvesFrom": "Machoke",
+      "types": ["Fighting"],
+      "weakness": {
+        "type": "Psychic",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [],
+      "attacks": [
+        {
+          "name": "Crushing Punch",
+          "cost": ["Fighting", "Fighting", "Colorless"],
+          "baseDamage": 120,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 120,
+              "target": "defender"
+            },
+            {
+              "op": "flipCoin",
+              "onHeads": [
+                {
+                  "op": "custom",
+                  "fn": "discardRandomCard"
+                }
+              ],
+              "onTails": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "gengar-ex",
+      "name": "Gengar ex",
+      "hp": 220,
+      "stage": 2,
+      "evolvesFrom": "Haunter",
+      "types": ["Psychic"],
+      "weakness": {
+        "type": "Darkness",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [
+        {
+          "name": "Spooky Whispers",
+          "effect": [
+            {
+              "op": "custom",
+              "fn": "spookyWhispers"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Poltergeist",
+          "cost": ["Psychic", "Colorless"],
+          "baseDamage": 0,
+          "effect": [
+            {
+              "op": "custom",
+              "fn": "poltergeistDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "lapras-ex",
+      "name": "Lapras ex",
+      "hp": 200,
+      "stage": 0,
+      "types": ["Water"],
+      "weakness": {
+        "type": "Metal",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [
+        {
+          "name": "Icy Veil",
+          "effect": [
+            {
+              "op": "modifyDamageTaken",
+              "amount": 30,
+              "timing": "beforeDamage"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Frost Wave",
+          "cost": ["Water", "Water"],
+          "baseDamage": 90,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 90,
+              "target": "allBench"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "articuno-ex",
+      "name": "Articuno ex",
+      "hp": 180,
+      "stage": 0,
+      "types": ["Water"],
+      "weakness": {
+        "type": "Metal",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [
+        {
+          "name": "Sheer Cold",
+          "effect": [
+            {
+              "op": "custom",
+              "fn": "sheerColdAbility"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Ice Beam",
+          "cost": ["Water", "Colorless"],
+          "baseDamage": 100,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 100,
+              "target": "defender"
+            },
+            {
+              "op": "flipCoin",
+              "onHeads": [
+                {
+                  "op": "applyStatus",
+                  "condition": "Paralyzed",
+                  "target": "defender"
+                }
+              ],
+              "onTails": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "zapdos-ex",
+      "name": "Zapdos ex",
+      "hp": 190,
+      "stage": 0,
+      "types": ["Lightning"],
+      "weakness": {
+        "type": "Water",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [
+        {
+          "name": "Thunder Storm",
+          "effect": [
+            {
+              "op": "custom",
+              "fn": "thunderStorm"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Sky Legends",
+          "cost": ["Lightning", "Colorless"],
+          "baseDamage": 150,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 150,
+              "target": "defender"
+            },
+            {
+              "op": "discardEnergy",
+              "from": "self",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "moltres-ex",
+      "name": "Moltres ex",
+      "hp": 200,
+      "stage": 0,
+      "types": ["Fire"],
+      "weakness": {
+        "type": "Water",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [
+        {
+          "name": "Flame Screen",
+          "effect": []
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Inferno Dance",
+          "cost": ["Fire", "Fire"],
+          "baseDamage": 120,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 120,
+              "target": "defender"
+            },
+            {
+              "op": "flipCoin",
+              "onHeads": [
+                {
+                  "op": "applyStatus",
+                  "condition": "Burned",
+                  "target": "defender"
+                }
+              ],
+              "onTails": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "dragonite-ex",
+      "name": "Dragonite ex",
+      "hp": 220,
+      "stage": 2,
+      "evolvesFrom": "Dragonair",
+      "types": ["Dragon"],
+      "weakness": {
+        "type": "Dragon",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [
+        {
+          "name": "Dragon Dance",
+          "effect": [
+            {
+              "op": "drawCards",
+              "count": 2
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Outrage",
+          "cost": ["Dragon", "Dragon", "Colorless"],
+          "baseDamage": 0,
+          "effect": [
+            {
+              "op": "custom",
+              "fn": "outrageScaling"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "arcanine-ex",
+      "name": "Arcanine ex",
+      "hp": 240,
+      "stage": 1,
+      "evolvesFrom": "Growlithe",
+      "types": ["Fire"],
+      "weakness": {
+        "type": "Water",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [],
+      "attacks": [
+        {
+          "name": "Flame Charge",
+          "cost": ["Fire", "Colorless"],
+          "baseDamage": 110,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 110,
+              "target": "defender"
+            },
+            {
+              "op": "custom",
+              "fn": "attachFireEnergy"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "golem-ex",
+      "name": "Golem ex",
+      "hp": 260,
+      "stage": 2,
+      "evolvesFrom": "Graveler",
+      "types": ["Fighting"],
+      "weakness": {
+        "type": "Water",
+        "mult": 2
+      },
+      "retreatCost": 3,
+      "abilities": [
+        {
+          "name": "Solid Rock",
+          "effect": [
+            {
+              "op": "modifyDamageTaken",
+              "amount": 20,
+              "timing": "beforeDamage"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Earthquake",
+          "cost": ["Fighting", "Fighting"],
+          "baseDamage": 150,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 150,
+              "target": "allBench"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "pikachu-ex",
+      "name": "Pikachu ex",
+      "hp": 180,
+      "stage": 0,
+      "types": ["Lightning"],
+      "weakness": {
+        "type": "Water",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [
+        {
+          "name": "Static Electricity",
+          "effect": [
+            {
+              "op": "custom",
+              "fn": "staticElectricity"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Thunderbolt",
+          "cost": ["Lightning", "Lightning"],
+          "baseDamage": 160,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 160,
+              "target": "defender"
+            },
+            {
+              "op": "discardEnergy",
+              "from": "self",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "articuno",
+      "name": "Articuno",
+      "hp": 110,
+      "stage": 0,
+      "types": ["Water"],
+      "weakness": {
+        "type": "Metal",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [],
+      "attacks": [
+        {
+          "name": "Powder Snow",
+          "cost": ["Water"],
+          "baseDamage": 20,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 20,
+              "target": "defender"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "zapdos",
+      "name": "Zapdos",
+      "hp": 100,
+      "stage": 0,
+      "types": ["Lightning"],
+      "weakness": {
+        "type": "Water",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [],
+      "attacks": [
+        {
+          "name": "Thunder Shock",
+          "cost": ["Lightning"],
+          "baseDamage": 30,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 30,
+              "target": "defender"
+            },
+            {
+              "op": "flipCoin",
+              "onHeads": [
+                {
+                  "op": "applyStatus",
+                  "condition": "Paralyzed",
+                  "target": "defender"
+                }
+              ],
+              "onTails": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "moltres",
+      "name": "Moltres",
+      "hp": 110,
+      "stage": 0,
+      "types": ["Fire"],
+      "weakness": {
+        "type": "Water",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [],
+      "attacks": [
+        {
+          "name": "Ember",
+          "cost": ["Fire"],
+          "baseDamage": 30,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 30,
+              "target": "defender"
+            },
+            {
+              "op": "flipCoin",
+              "onHeads": [
+                {
+                  "op": "applyStatus",
+                  "condition": "Burned",
+                  "target": "defender"
+                }
+              ],
+              "onTails": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "mewtwo-ex",
+      "name": "Mewtwo ex",
+      "hp": 210,
+      "stage": 0,
+      "types": ["Psychic"],
+      "weakness": {
+        "type": "Darkness",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [
+        {
+          "name": "Barrier",
+          "effect": [
+            {
+              "op": "modifyDamageTaken",
+              "amount": 30,
+              "timing": "beforeDamage"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Psystrike",
+          "cost": ["Psychic", "Psychic"],
+          "baseDamage": 180,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 180,
+              "target": "defender"
+            },
+            {
+              "op": "custom",
+              "fn": "psystrikeDamageDealer"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "nidoqueen-ex",
+      "name": "Nidoqueen ex",
+      "hp": 210,
+      "stage": 1,
+      "evolvesFrom": "Nidorina",
+      "types": ["Psychic"],
+      "weakness": {
+        "type": "Metal",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [
+        {
+          "name": "Poison Powder",
+          "effect": []
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Toxic Spikes",
+          "cost": ["Psychic", "Colorless"],
+          "baseDamage": 80,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 80,
+              "target": "defender"
+            },
+            {
+              "op": "applyStatus",
+              "condition": "Poisoned",
+              "target": "defender"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "ninetales-ex",
+      "name": "Ninetales ex",
+      "hp": 180,
+      "stage": 1,
+      "evolvesFrom": "Vulpix",
+      "types": ["Fire"],
+      "weakness": {
+        "type": "Water",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [
+        {
+          "name": "Flame Tail",
+          "effect": [
+            {
+              "op": "drawCards",
+              "count": 1
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Mystical Fire",
+          "cost": ["Fire", "Colorless"],
+          "baseDamage": 100,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 100,
+              "target": "defender"
+            },
+            {
+              "op": "discardEnergy",
+              "from": "defender",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "kangaskhan-ex",
+      "name": "Kangaskhan ex",
+      "hp": 250,
+      "stage": 0,
+      "types": ["Colorless"],
+      "weakness": {
+        "type": "Fighting",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [
+        {
+          "name": "Maternal Care",
+          "effect": [
+            {
+              "op": "heal",
+              "amount": 30,
+              "target": "self"
+            }
+          ]
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Parent and Child",
+          "cost": ["Colorless", "Colorless"],
+          "baseDamage": 130,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 130,
+              "target": "defender"
+            },
+            {
+              "op": "custom",
+              "fn": "parentAndChild"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "energy",
+      "id": "colorless-energy",
+      "name": "Colorless Energy",
+      "providesType": "Colorless"
+    },
+    {
+      "type": "energy",
+      "id": "fire-energy",
+      "name": "Fire Energy",
+      "providesType": "Fire"
+    },
+    {
+      "type": "energy",
+      "id": "water-energy",
+      "name": "Water Energy",
+      "providesType": "Water"
+    },
+    {
+      "type": "energy",
+      "id": "grass-energy",
+      "name": "Grass Energy",
+      "providesType": "Grass"
+    },
+    {
+      "type": "energy",
+      "id": "lightning-energy",
+      "name": "Lightning Energy",
+      "providesType": "Lightning"
+    },
+    {
+      "type": "energy",
+      "id": "psychic-energy",
+      "name": "Psychic Energy",
+      "providesType": "Psychic"
+    },
+    {
+      "type": "energy",
+      "id": "fighting-energy",
+      "name": "Fighting Energy",
+      "providesType": "Fighting"
+    },
+    {
+      "type": "energy",
+      "id": "darkness-energy",
+      "name": "Darkness Energy",
+      "providesType": "Darkness"
+    },
+    {
+      "type": "energy",
+      "id": "metal-energy",
+      "name": "Metal Energy",
+      "providesType": "Metal"
+    },
+    {
+      "type": "energy",
+      "id": "fairy-energy",
+      "name": "Fairy Energy",
+      "providesType": "Fairy"
+    },
+    {
+      "type": "energy",
+      "id": "dragon-energy",
+      "name": "Dragon Energy",
+      "providesType": "Dragon"
+    },
+    {
+      "type": "trainer",
+      "id": "potion",
+      "name": "Potion",
+      "subtype": "item",
+      "effect": [
+        {
+          "op": "heal",
+          "amount": 20,
+          "target": "self"
+        }
+      ]
+    },
+    {
+      "type": "trainer",
+      "id": "full-restore",
+      "name": "Full Restore",
+      "subtype": "item",
+      "effect": [
+        {
+          "op": "heal",
+          "amount": 120,
+          "target": "self"
+        }
+      ]
+    },
+    {
+      "type": "trainer",
+      "id": "switch",
+      "name": "Switch",
+      "subtype": "item",
+      "effect": [
+        {
+          "op": "custom",
+          "fn": "switchPokemon"
+        }
+      ]
+    },
+    {
+      "type": "trainer",
+      "id": "rowan",
+      "name": "Professor Rowan",
+      "subtype": "supporter",
+      "effect": [
+        {
+          "op": "drawCards",
+          "count": 2
+        },
+        {
+          "op": "custom",
+          "fn": "discardCards"
+        }
+      ]
+    }
+  ]
+}
