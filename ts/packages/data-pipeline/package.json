@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "scrape": "node dist/index.js",
+    "scrape:standard": "node dist/cli.js",
     "build": "tsc",
     "test": "vitest"
   },

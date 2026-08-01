@@ -47,16 +47,17 @@ export const evolveHandler: ActionHandler = {
   },
 
   apply(state: GameState, action: Action): GameState {
+    const typedAction = action as Extract<Action, { type: "evolve" }>;
     const player = state.players[action.player];
-    const cardInstance = player.hand.find((c) => c.cardId === action.cardId)!;
+    const cardInstance = player.hand.find((c) => c.cardId === typedAction.cardId)!;
 
     // Find and replace target
-    const newActive = player.active?.card.instanceId === action.targetInstanceId
+    const newActive = player.active?.card.instanceId === typedAction.targetInstanceId
       ? { ...player.active, card: cardInstance }
       : player.active;
 
     const newBench = player.bench.map((p) =>
-      p.card.instanceId === action.targetInstanceId
+      p.card.instanceId === typedAction.targetInstanceId
         ? { ...p, card: cardInstance }
         : p
     );

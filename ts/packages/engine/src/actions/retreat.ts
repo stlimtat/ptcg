@@ -41,9 +41,10 @@ export const retreatHandler: ActionHandler = {
   },
 
   apply(state: GameState, action: Action): GameState {
+    const typedAction = action as Extract<Action, { type: "retreat" }>;
     const player = state.players[action.player];
     const activeCard = player.active!;
-    const benchPokemon = player.bench.find((p) => p.card.instanceId === action.benchInstanceId)!;
+    const benchPokemon = player.bench.find((p) => p.card.instanceId === typedAction.benchInstanceId)!;
 
     // Get retreat cost
     let retreatCost = 1;
@@ -60,7 +61,7 @@ export const retreatHandler: ActionHandler = {
 
     // Update bench list: remove switched bench Pokémon, add old active
     const newBench = player.bench.map((p) =>
-      p.card.instanceId === action.benchInstanceId
+      p.card.instanceId === typedAction.benchInstanceId
         ? { ...activeCard, attachedEnergy: remainingEnergy }
         : p
     );

@@ -45,6 +45,8 @@ export const attackHandler: ActionHandler = {
   isLegal(state: GameState, action: Action): boolean {
     if (action.type !== "attack") return false;
 
+    const typedAction = action as Extract<Action, { type: "attack" }>;
+
     // Only active player can attack during main phase
     if (action.player !== state.activePlayer) return false;
     if (state.phase !== "main") return false;
@@ -61,11 +63,11 @@ export const attackHandler: ActionHandler = {
     const cardDef = testCardRegistry.get(activeCard.cardId);
     if (!cardDef || cardDef.type !== "pokemon") return false;
 
-    if (action.attackIndex < 0 || action.attackIndex >= cardDef.attacks.length) {
+    if (typedAction.attackIndex < 0 || typedAction.attackIndex >= cardDef.attacks.length) {
       return false;
     }
 
-    const attack = cardDef.attacks[action.attackIndex];
+    const attack = cardDef.attacks[typedAction.attackIndex];
 
     // Check energy cost
     if (!hasEnoughEnergy(player.active.attachedEnergy, attack.cost, testCardRegistry)) {
@@ -80,6 +82,7 @@ export const attackHandler: ActionHandler = {
   },
 
   apply(state: GameState, action: Action): GameState {
+    const typedAction = action as Extract<Action, { type: "attack" }>;
     const attacker = state.players[action.player];
     const defender = state.players[action.player === "p1" ? "p2" : "p1"];
 
@@ -90,7 +93,7 @@ export const attackHandler: ActionHandler = {
     const attackerCard = testCardRegistry.get(attacker.active.card.cardId);
     if (!attackerCard || attackerCard.type !== "pokemon") return state;
 
-    const attack = attackerCard.attacks[action.attackIndex];
+    const attack = attackerCard.attacks[typedAction.attackIndex];
 
     // Check for Confused status (50% chance to fail)
     if (attacker.active.statusConditions.includes("Confused")) {

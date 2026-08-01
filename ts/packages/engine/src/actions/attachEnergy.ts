@@ -41,11 +41,12 @@ export const attachEnergyHandler: ActionHandler = {
   },
 
   apply(state: GameState, action: Action): GameState {
+    const typedAction = action as Extract<Action, { type: "attachEnergy" }>;
     const player = state.players[action.player];
-    const cardInstance = player.hand.find((c) => c.cardId === action.energyCardId)!;
+    const cardInstance = player.hand.find((c) => c.cardId === typedAction.energyCardId)!;
 
     // Find and attach to target
-    const newActive = player.active?.card.instanceId === action.targetInstanceId
+    const newActive = player.active?.card.instanceId === typedAction.targetInstanceId
       ? {
           ...player.active,
           attachedEnergy: [...player.active.attachedEnergy, cardInstance],
@@ -53,7 +54,7 @@ export const attachEnergyHandler: ActionHandler = {
       : player.active;
 
     const newBench = player.bench.map((p) =>
-      p.card.instanceId === action.targetInstanceId
+      p.card.instanceId === typedAction.targetInstanceId
         ? { ...p, attachedEnergy: [...p.attachedEnergy, cardInstance] }
         : p
     );

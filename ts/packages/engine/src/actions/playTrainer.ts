@@ -37,13 +37,14 @@ export const playTrainerHandler: ActionHandler = {
   },
 
   apply(state: GameState, action: Action): GameState {
+    const typedAction = action as Extract<Action, { type: "playTrainer" }>;
     const player = state.players[action.player];
-    const cardInstance = player.hand.find((c) => c.cardId === action.cardId)!;
+    const cardInstance = player.hand.find((c) => c.cardId === typedAction.cardId)!;
 
     // Determine if supporter
     let supporterPlayedThisTurn = player.supporterPlayedThisTurn;
     if (testCardRegistry) {
-      const cardDef = testCardRegistry.get(action.cardId);
+      const cardDef = testCardRegistry.get(typedAction.cardId);
       if (cardDef && cardDef.type === "trainer" && cardDef.subtype === "supporter") {
         supporterPlayedThisTurn = true;
       }

@@ -35,8 +35,9 @@ export const playPokemonHandler: ActionHandler = {
   },
 
   apply(state: GameState, action: Action): GameState {
+    const typedAction = action as Extract<Action, { type: "playPokemon" }>;
     const player = state.players[action.player];
-    const cardInstance = player.hand.find((c) => c.cardId === action.cardId)!;
+    const cardInstance = player.hand.find((c) => c.cardId === typedAction.cardId)!;
 
     return {
       ...state,
