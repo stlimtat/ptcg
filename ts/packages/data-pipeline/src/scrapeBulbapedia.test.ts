@@ -107,8 +107,8 @@ describe("scrapeBulbapedia", () => {
     });
 
     it("should log progress for each card", async () => {
-      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation();
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation();
+      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       global.fetch = vi.fn().mockRejectedValue(new Error("Test error"));
 
