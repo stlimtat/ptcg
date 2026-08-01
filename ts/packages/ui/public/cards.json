@@ -1131,6 +1131,154 @@
       ]
     },
     {
+      "type": "pokemon",
+      "id": "dragapult-ex",
+      "name": "Dragapult ex",
+      "hp": 250,
+      "stage": 2,
+      "evolvesFrom": "Drakloak",
+      "types": ["Dragon"],
+      "weakness": {
+        "type": "Dragon",
+        "mult": 2
+      },
+      "retreatCost": 2,
+      "abilities": [],
+      "attacks": [
+        {
+          "name": "Phantom Dive",
+          "cost": ["Dragon", "Colorless", "Colorless"],
+          "baseDamage": 180,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 180,
+              "target": "defender"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "drakloak",
+      "name": "Drakloak",
+      "hp": 100,
+      "stage": 1,
+      "evolvesFrom": "Dreepy",
+      "types": ["Dragon"],
+      "weakness": {
+        "type": "Dragon",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [],
+      "attacks": [
+        {
+          "name": "Night Shade",
+          "cost": ["Dragon", "Colorless"],
+          "baseDamage": 60,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 60,
+              "target": "defender"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "dreepy",
+      "name": "Dreepy",
+      "hp": 50,
+      "stage": 0,
+      "types": ["Dragon"],
+      "weakness": {
+        "type": "Dragon",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [],
+      "attacks": [
+        {
+          "name": "Quick Peck",
+          "cost": ["Dragon"],
+          "baseDamage": 20,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 20,
+              "target": "defender"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "zoroark-ex",
+      "name": "Zoroark ex",
+      "hp": 240,
+      "stage": 1,
+      "evolvesFrom": "Zorua",
+      "types": ["Darkness"],
+      "weakness": {
+        "type": "Fairy",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [
+        {
+          "name": "Shadow Shift",
+          "effect": []
+        }
+      ],
+      "attacks": [
+        {
+          "name": "Illusion Piercer",
+          "cost": ["Darkness", "Colorless"],
+          "baseDamage": 160,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 160,
+              "target": "defender"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "pokemon",
+      "id": "zorua",
+      "name": "Zorua",
+      "hp": 70,
+      "stage": 0,
+      "types": ["Darkness"],
+      "weakness": {
+        "type": "Fairy",
+        "mult": 2
+      },
+      "retreatCost": 1,
+      "abilities": [],
+      "attacks": [
+        {
+          "name": "Illusion",
+          "cost": ["Darkness"],
+          "baseDamage": 20,
+          "effect": [
+            {
+              "op": "dealDamage",
+              "amount": 20,
+              "target": "defender"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "type": "energy",
       "id": "colorless-energy",
       "name": "Colorless Energy",
