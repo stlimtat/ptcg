@@ -3,7 +3,7 @@ import { ScrapedCard } from "./types.js";
 import { writeFileSync, readFileSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { scrapeBulbapediaCards } from "./scrapeBulbapedia.js";
+import { scrapeStandardCards } from "./scrapeGitHub.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -39,56 +39,20 @@ export function buildCardJson(
   );
 }
 
-// Read standard card list from JSON
-function readStandardCardList(): string[] {
-  // Look for the file in src directory (one level up from compiled dist)
-  const srcPath = join(__dirname, "..", "src", "standardCardList.json");
-  const content = readFileSync(srcPath, "utf-8");
-  const data = JSON.parse(content);
-  return data.allCards || [];
-}
-
-// Build complete cards.json from standard format card list
+// Build complete cards.json from GitHub Pokemon TCG Data repo
 export async function buildFullStandardCardJson(outputDir: string): Promise<void> {
-  console.log("Starting full Standard format card build...");
+  console.log("Building Standard format card database from GitHub...");
 
   // Ensure output directory exists
   mkdirSync(outputDir, { recursive: true });
 
-  // Read all card names
-  const allCardNames = readStandardCardList();
-  console.log(`Found ${allCardNames.length} cards in Standard format list`);
+  // Fetch all cards from GitHub Pokemon TCG Data
+  const cards = await scrapeStandardCards();
+  console.log(`Fetched ${cards.length} cards from GitHub`);
 
-  // Scrape all cards from Bulbapedia
-  const scrapedCards = await scrapeBulbapediaCards(allCardNames);
-  console.log(`Successfully scraped ${scrapedCards.length} cards`);
-
-  // Build Card array and write to file
-  // ponytail: effect generation stubbed as empty arrays; upgrading to full DSL matching when needed
-  const cards: Card[] = scrapedCards.map((scraped) => ({
-    type: "pokemon" as const,
-    id: scraped.name.toLowerCase().replace(/\s+/g, "-"),
-    name: scraped.name,
-    hp: scraped.hp || 0,
-    stage: scraped.stage || 0,
-    evolvesFrom: scraped.evolvesFrom,
-    types: scraped.types as any,
-    retreatCost: scraped.retreatCost,
-    abilities: scraped.abilities?.map(a => ({
-      name: a.name,
-      effect: [],
-    })) || [],
-    attacks: scraped.attacksRaw.map(a => ({
-      name: a.name,
-      cost: a.cost as any,
-      baseDamage: a.damage,
-      effect: a.text ? [] : undefined,
-    })),
-  }));
-
-  const output = { cards };
+  // Write to file
   const outputPath = join(outputDir, "cards.json");
-  writeFileSync(outputPath, JSON.stringify(output, null, 2));
+  writeFileSync(outputPath, JSON.stringify(cards, null, 2));
 
   console.log(`Successfully wrote ${cards.length} cards to ${outputPath}`);
 }
