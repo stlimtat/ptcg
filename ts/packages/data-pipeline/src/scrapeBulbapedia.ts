@@ -4,7 +4,11 @@ import { join } from "path";
 import { createHash } from "crypto";
 
 const CACHE_DIR = join(process.cwd(), ".cache", "bulbapedia");
-const POLITENESS_DELAY_MS = 500;
+const POLITENESS_DELAY_MS = 2500; // 2.5 seconds base delay
+const RETRY_ATTEMPTS = 3;
+const RETRY_BACKOFF_MS = 1000;
+
+const USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36";
 
 export function scrapeBulbapediaCard(html: string, cardId: string): ScrapedCard {
   const nameMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
@@ -58,7 +62,11 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Batch scraping with caching
+function getJitterDelay(): number {
+  return Math.random() * 1000; // 0-1 second random jitter
+}
+
+// Batch scraping with caching and retry logic
 export async function scrapeBulbapediaCards(
   cardNames: string[]
 ): Promise<ScrapedCard[]> {
@@ -70,33 +78,73 @@ export async function scrapeBulbapediaCards(
     const progressStr = `[${i + 1}/${cardNames.length}] Scraping ${cardName}...`;
     console.log(progressStr);
 
-    try {
-      // Check cache first
-      let html = getCachedHtml(cardName);
+    let html: string | null = null;
+    let lastError: string = "";
 
-      if (!html) {
-        // Fetch from Bulbapedia if not cached
-        const url = `https://bulbapedia.bulbagarden.net/wiki/${encodeURIComponent(cardName)}`;
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+    // Check cache first
+    html = getCachedHtml(cardName);
+
+    // Retry loop if not cached
+    if (!html) {
+      const url = `https://bulbapedia.bulbagarden.net/wiki/${encodeURIComponent(cardName)}`;
+      for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
+        try {
+          const response = await fetch(url, {
+            headers: {
+              "User-Agent": USER_AGENT,
+              Accept: "text/html",
+              "Accept-Language": "en-US",
+            },
+          });
+
+          if (!response.ok) {
+            const retryable = response.status === 429 || response.status === 503;
+            lastError = `HTTP ${response.status}`;
+            if (retryable && attempt < RETRY_ATTEMPTS) {
+              console.warn(
+                `  Attempt ${attempt}/${RETRY_ATTEMPTS}: ${lastError}, retrying...`
+              );
+              await sleep(RETRY_BACKOFF_MS * attempt);
+              continue;
+            }
+            throw new Error(lastError);
+          }
+
+          html = await response.text();
+          setCachedHtml(cardName, html);
+          break; // Success, exit retry loop
+        } catch (error) {
+          lastError = error instanceof Error ? error.message : String(error);
+          if (attempt < RETRY_ATTEMPTS) {
+            console.warn(
+              `  Attempt ${attempt}/${RETRY_ATTEMPTS}: ${lastError}, retrying...`
+            );
+            await sleep(RETRY_BACKOFF_MS * attempt);
+          }
         }
-        html = await response.text();
-        setCachedHtml(cardName, html);
       }
+    }
 
-      // Parse the HTML
-      const card = scrapeBulbapediaCard(html, cardName);
-      results.push(card);
+    // Parse the HTML if we got it
+    try {
+      if (html) {
+        const card = scrapeBulbapediaCard(html, cardName);
+        results.push(card);
+      } else {
+        failures.push({ cardName, error: lastError || "Unknown error" });
+        console.warn(`Failed to scrape ${cardName}: ${lastError}`);
+      }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       failures.push({ cardName, error: errorMsg });
-      console.warn(`Failed to scrape ${cardName}: ${errorMsg}`);
+      console.warn(`Failed to parse ${cardName}: ${errorMsg}`);
     }
 
     // Polite delay between requests (not after the last one)
     if (i < cardNames.length - 1) {
-      await sleep(POLITENESS_DELAY_MS);
+      const jitter = getJitterDelay();
+      const totalDelay = POLITENESS_DELAY_MS + jitter;
+      await sleep(totalDelay);
     }
   }
 
