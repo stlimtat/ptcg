@@ -1,10 +1,10 @@
-import React, { useReducer, useEffect, useRef } from 'react';
+import React, { useReducer, useEffect, useRef, useState } from 'react';
 import { GameState, Action, applyAction, legalActions, createInitialState, CardInstance } from '@pokemon-tcg/engine';
 import { Board } from './views/Board';
 import { Hand } from './views/Hand';
 import { ActionBar } from './views/ActionBar';
 import { Log } from './views/Log';
-import { loadCardRegistry, loadDeck } from './utils/cardLoader';
+import { loadCardRegistry, loadDeck, initializeData } from './utils/cardLoader';
 import { getBotAction } from './controllers/botController';
 
 // ponytail: polyfill randomUUID for browser
@@ -19,24 +19,56 @@ if (typeof (globalThis as any).crypto === 'undefined') {
   };
 }
 
-const cardRegistry = loadCardRegistry();
-
-// Load real Standard-format decks
-const P1_DECK = loadDeck('dragapult-ex');
-const P2_DECK = loadDeck('zoroark-ex');
-
 export default function App() {
-  const [state, dispatch] = useReducer(
-    (s: GameState, action: Action) => {
+  const [cardRegistry, setCardRegistry] = useState<any>({});
+  const [p1Deck, setP1Deck] = useState<string[]>([]);
+  const [p2Deck, setP2Deck] = useState<string[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  const [state, setGameState] = useState<GameState>(createInitialState([], []));
+
+  const dispatch = (action: Action) => {
+    try {
+      setGameState(applyAction(state, action));
+    } catch (e) {
+      console.error('Action failed:', e);
+    }
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
       try {
-        return applyAction(s, action);
+        const cardsRes = await fetch('/cards.json');
+        const cardsData = await cardsRes.json();
+        const registry: any = {};
+        const cardsList = Array.isArray(cardsData) ? cardsData : (cardsData.cards || []);
+        for (const card of cardsList) {
+          registry[card.id] = card;
+        }
+        setCardRegistry(registry);
+
+        const dragRes = await fetch('/decks/dragapult-ex.json');
+        const dragDeck = await dragRes.json();
+        setP1Deck(dragDeck.cards || []);
+
+        const zoroRes = await fetch('/decks/zoroark-ex.json');
+        const zoroDeck = await zoroRes.json();
+        setP2Deck(zoroDeck.cards || []);
+        setLoaded(true);
       } catch (e) {
-        console.error('Action failed:', e);
-        return s;
+        console.error('Failed to load data:', e);
+        setLoaded(true);
       }
-    },
-    createInitialState(P1_DECK, P2_DECK)
-  );
+    };
+    loadData();
+  }, []);
+
+  // Update game state when decks are loaded
+  useEffect(() => {
+    if (p1Deck.length > 0 && p2Deck.length > 0) {
+      setGameState(createInitialState(p1Deck, p2Deck));
+    }
+  }, [p1Deck, p2Deck]);
 
   const botTimeoutRef = useRef<NodeJS.Timeout>();
 
@@ -63,6 +95,15 @@ export default function App() {
   };
 
   const legal = legalActions(state, 'p1');
+
+  if (!loaded) {
+    return (
+      <div style={{ maxWidth: '1200px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
+        <h1>Pokémon TCG</h1>
+        <p>Loading game data...</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
