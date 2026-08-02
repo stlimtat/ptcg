@@ -4,11 +4,28 @@ import { join } from "path";
 import { createHash } from "crypto";
 
 const CACHE_DIR = join(process.cwd(), ".cache", "bulbapedia");
-const POLITENESS_DELAY_MS = 2500; // 2.5 seconds base delay
-const RETRY_ATTEMPTS = 3;
-const RETRY_BACKOFF_MS = 1000;
+const POLITENESS_DELAY_MS = 30000; // 30 seconds between requests (manual rate limiting)
+const RETRY_ATTEMPTS = 2;
+const RETRY_BACKOFF_MS = 5000;
 
-const USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36";
+// Browser headers to avoid blocks
+const USER_AGENT =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+const HEADERS = {
+  "User-Agent": USER_AGENT,
+  Accept:
+    "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9",
+  "Accept-Encoding": "gzip, deflate, br",
+  "Cache-Control": "no-cache",
+  Pragma: "no-cache",
+  Referer: "https://bulbapedia.bulbagarden.net/",
+  "Sec-Fetch-Dest": "document",
+  "Sec-Fetch-Mode": "navigate",
+  "Sec-Fetch-Site": "none",
+  Connection: "keep-alive",
+  "Upgrade-Insecure-Requests": "1",
+};
 
 export function scrapeBulbapediaCard(html: string, cardId: string): ScrapedCard {
   const nameMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
@@ -90,11 +107,8 @@ export async function scrapeBulbapediaCards(
       for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
         try {
           const response = await fetch(url, {
-            headers: {
-              "User-Agent": USER_AGENT,
-              Accept: "text/html",
-              "Accept-Language": "en-US",
-            },
+            headers: HEADERS,
+            redirect: "follow",
           });
 
           if (!response.ok) {
