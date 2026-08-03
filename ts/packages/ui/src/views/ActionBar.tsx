@@ -1,5 +1,6 @@
 import React from 'react';
 import { Action } from '@pokemon-tcg/engine';
+import { CardTooltip } from '../components/CardTooltip';
 
 interface ActionBarProps {
   actions: Action[];
@@ -41,19 +42,44 @@ export const ActionBar: React.FC<ActionBarProps> = ({ actions, onAction, cardReg
     }
   };
 
+  const getCardForAction = (action: Action) => {
+    const act = action as any;
+    if (act.type === 'playPokemon' || act.type === 'evolve' || act.type === 'playTrainer' || act.type === 'attachEnergy') {
+      const cardId = act.cardId || act.energyCardId;
+      return cardRegistry[cardId];
+    }
+    return null;
+  };
+
   return (
     <div style={{ border: '2px solid red', padding: '10px' }}>
       <h3>Actions ({actions.length})</h3>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-        {actions.map((action, i) => (
-          <button
-            key={i}
-            onClick={() => onAction(action)}
-            style={{ padding: '8px 12px', cursor: 'pointer' }}
-          >
-            {getActionLabel(action)}
-          </button>
-        ))}
+        {actions.map((action, i) => {
+          const cardDef = getCardForAction(action);
+          const act = action as any;
+          const cardId = act.cardId || act.energyCardId;
+          const label = getActionLabel(action);
+
+          const button = (
+            <button
+              key={i}
+              onClick={() => onAction(action)}
+              style={{ padding: '8px 12px', cursor: 'pointer' }}
+            >
+              {label}
+            </button>
+          );
+
+          if (cardDef) {
+            return (
+              <CardTooltip key={i} cardId={cardId} cardName={label} cardDef={cardDef}>
+                {button}
+              </CardTooltip>
+            );
+          }
+          return button;
+        })}
       </div>
     </div>
   );

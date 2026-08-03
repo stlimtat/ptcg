@@ -1,6 +1,7 @@
 import React from 'react';
 import { GameState, CardInstance } from '@pokemon-tcg/engine';
 import { CardRegistry } from '../types';
+import { CardTooltip } from '../components/CardTooltip';
 
 interface BoardProps {
   state: GameState;
@@ -9,11 +10,17 @@ interface BoardProps {
 
 export const Board: React.FC<BoardProps> = ({ state, cardRegistry }) => {
   const renderPokemon = (poke: any) => (
-    <div style={{ border: '1px solid black', padding: '10px', marginRight: '10px' }}>
-      <div>{cardRegistry[poke.card.cardId]?.name || poke.card.cardId}</div>
-      <div>HP: {poke.damage}</div>
-      <div>Energy: {poke.attachedEnergy.length}</div>
-    </div>
+    <CardTooltip
+      cardId={poke.card.cardId}
+      cardName={cardRegistry[poke.card.cardId]?.name || poke.card.cardId}
+      cardDef={cardRegistry[poke.card.cardId]}
+    >
+      <div style={{ border: '1px solid black', padding: '10px', marginRight: '10px' }}>
+        <div>{cardRegistry[poke.card.cardId]?.name || poke.card.cardId}</div>
+        <div>HP: {poke.damage}</div>
+        <div>Energy: {poke.attachedEnergy.length}</div>
+      </div>
+    </CardTooltip>
   );
 
   return (
