@@ -22,7 +22,7 @@ if (typeof (globalThis as any).crypto === 'undefined') {
 
 export default function App() {
   const [cardRegistry, setCardRegistry] = useState<any>({});
-  const [availableDecks, setAvailableDecks] = useState<string[]>(['dragapult-ex', 'zoroark-ex']);
+  const [availableDecks, setAvailableDecks] = useState<string[]>(['dragapult-ex', 'zoroark-ex', 'grass-deck', 'fire-deck']);
   const [p1DeckName, setP1DeckName] = useState<string>('');
   const [p2DeckName, setP2DeckName] = useState<string>('');
   const [p1Deck, setP1Deck] = useState<string[]>([]);
@@ -80,6 +80,8 @@ export default function App() {
   useEffect(() => {
     if (p1Deck.length > 0 && p2Deck.length > 0 && gameStarted) {
       const initialState = createInitialState(p1Deck, p2Deck);
+      initialState.cardRegistry = cardRegistry;
+
       // Setup phase: draw 7 cards for each player
       const p1Drawn = initialState.players.p1.deck.splice(0, 7);
       const p2Drawn = initialState.players.p2.deck.splice(0, 7);

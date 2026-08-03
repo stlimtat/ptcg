@@ -37,6 +37,8 @@ export interface GameState {
   players: Record<"p1" | "p2", PlayerState>;
   winner?: "p1" | "p2" | "draw";
   log: LogEntry[];
+  cardRegistry?: Record<string, Card>;
+  stadium?: CardInstance;
 }
 
 export interface LogEntry {

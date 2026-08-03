@@ -11,12 +11,12 @@ export function setCardRegistry(registry: Map<string, Card> | null) {
 function hasEnoughEnergy(
   attachedEnergy: { cardId: string }[],
   attackCost: PokemonType[],
-  registry: Map<string, Card> | null
+  registry: Map<string, Card> | Record<string, Card> | null
 ): boolean {
   if (!registry) return true; // Can't validate without registry
 
   const energyTypes = attachedEnergy.map((e) => {
-    const cardDef = registry.get(e.cardId);
+    const cardDef = registry instanceof Map ? registry.get(e.cardId) : registry[e.cardId];
     if (cardDef && cardDef.type === "energy") {
       return cardDef.providesType;
     }
@@ -51,6 +51,9 @@ export const attackHandler: ActionHandler = {
     if (action.player !== state.activePlayer) return false;
     if (state.phase !== "main") return false;
 
+    // First player cannot attack on turn 1
+    if (state.turn === 1 && action.player === "p1") return false;
+
     const player = state.players[action.player];
 
     // Must have active Pokémon
@@ -58,9 +61,10 @@ export const attackHandler: ActionHandler = {
 
     // Attack index must be valid
     const activeCard = player.active.card;
-    if (!testCardRegistry) return true; // Can't validate without registry
+    const registry = state.cardRegistry || testCardRegistry;
+    if (!registry) return true; // Can't validate without registry
 
-    const cardDef = testCardRegistry.get(activeCard.cardId);
+    const cardDef = registry instanceof Map ? registry.get(activeCard.cardId) : registry[activeCard.cardId];
     if (!cardDef || cardDef.type !== "pokemon") return false;
 
     if (typedAction.attackIndex < 0 || typedAction.attackIndex >= cardDef.attacks.length) {
@@ -70,7 +74,7 @@ export const attackHandler: ActionHandler = {
     const attack = cardDef.attacks[typedAction.attackIndex];
 
     // Check energy cost
-    if (!hasEnoughEnergy(player.active.attachedEnergy, attack.cost, testCardRegistry)) {
+    if (!hasEnoughEnergy(player.active.attachedEnergy, attack.cost, registry)) {
       return false;
     }
 

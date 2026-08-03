@@ -19,6 +19,11 @@ export const Board: React.FC<BoardProps> = ({ state, cardRegistry }) => {
   return (
     <div style={{ border: '2px solid blue', padding: '10px', marginBottom: '20px' }}>
       <h2>Game Board</h2>
+      {state.stadium && (
+        <div style={{ background: '#ffffcc', padding: '8px', marginBottom: '10px', border: '1px solid orange' }}>
+          <strong>Stadium:</strong> {cardRegistry[state.stadium.cardId]?.name || state.stadium.cardId}
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <div>
           <h3>P2 (Opponent)</h3>

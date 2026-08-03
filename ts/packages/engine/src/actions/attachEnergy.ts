@@ -25,9 +25,9 @@ export const attachEnergyHandler: ActionHandler = {
     if (!card) return false;
 
     // Validate card is energy type if registry available
-    // Card registry validation pending phase 9
-    if (testCardRegistry) {
-      const cardDef = testCardRegistry.get(action.energyCardId);
+    const registry = state.cardRegistry || testCardRegistry;
+    if (registry) {
+      const cardDef = registry instanceof Map ? registry.get(action.energyCardId) : registry[action.energyCardId];
       if (!cardDef || cardDef.type !== "energy") return false;
     }
 

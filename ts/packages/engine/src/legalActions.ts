@@ -65,6 +65,12 @@ export function legalActions(
   const attachEnergyHandler = actionRegistry.get("attachEnergy");
   if (attachEnergyHandler) {
     for (const card of playerState.hand) {
+      // Skip non-energy cards if registry available
+      if (state.cardRegistry) {
+        const cardDef = state.cardRegistry[card.cardId];
+        if (!cardDef || cardDef.type !== "energy") continue;
+      }
+
       // Try to attach to active
       if (playerState.active) {
         const action = {

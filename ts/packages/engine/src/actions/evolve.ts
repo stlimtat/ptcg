@@ -28,10 +28,10 @@ export const evolveHandler: ActionHandler = {
     if (!target) return false;
 
     // Validate evolution chain if registry available
-    // Card registry validation pending phase 9
-    if (testCardRegistry) {
-      const evolutionCard = testCardRegistry.get(action.cardId);
-      const targetCard = testCardRegistry.get(target.card.cardId);
+    const registry = state.cardRegistry || testCardRegistry;
+    if (registry) {
+      const evolutionCard = registry instanceof Map ? registry.get(action.cardId) : registry[action.cardId];
+      const targetCard = registry instanceof Map ? registry.get(target.card.cardId) : registry[target.card.cardId];
 
       if (!evolutionCard || evolutionCard.type !== "pokemon") return false;
       if (!targetCard || targetCard.type !== "pokemon") return false;
