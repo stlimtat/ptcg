@@ -81,7 +81,7 @@ export default function App() {
 
   // Update game state when decks are loaded
   useEffect(() => {
-    if (p1Deck.length > 0 && p2Deck.length > 0 && gameStarted) {
+    if (p1Deck.length > 0 && p2Deck.length > 0 && gameStarted && Object.keys(cardRegistry).length > 0) {
       const initialState = createInitialState(p1Deck, p2Deck);
       initialState.cardRegistry = cardRegistry;
 
