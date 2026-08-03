@@ -78,10 +78,54 @@ export default function App() {
 
   // Update game state when decks are loaded
   useEffect(() => {
-    if (p1Deck.length > 0 && p2Deck.length > 0) {
-      setGameState(createInitialState(p1Deck, p2Deck));
+    if (p1Deck.length > 0 && p2Deck.length > 0 && gameStarted) {
+      const initialState = createInitialState(p1Deck, p2Deck);
+      // Setup phase: draw 7 cards for each player
+      const p1Drawn = initialState.players.p1.deck.splice(0, 7);
+      const p2Drawn = initialState.players.p2.deck.splice(0, 7);
+      initialState.players.p1.hand = p1Drawn;
+      initialState.players.p2.hand = p2Drawn;
+
+      // Set active Pokemon for each player (first Pokemon in hand)
+      const p1PokemonInHand = p1Drawn.find(c => cardRegistry[c.cardId]?.type === 'pokemon');
+      const p2PokemonInHand = p2Drawn.find(c => cardRegistry[c.cardId]?.type === 'pokemon');
+
+      if (p1PokemonInHand && cardRegistry[p1PokemonInHand.cardId]) {
+        initialState.players.p1.active = {
+          card: p1PokemonInHand,
+          damage: 0,
+          attachedEnergy: [],
+          attachedTools: [],
+          statusConditions: [],
+        };
+        // Remove from hand
+        initialState.players.p1.hand = initialState.players.p1.hand.filter(c => c.id !== p1PokemonInHand.id);
+      }
+
+      if (p2PokemonInHand && cardRegistry[p2PokemonInHand.cardId]) {
+        initialState.players.p2.active = {
+          card: p2PokemonInHand,
+          damage: 0,
+          attachedEnergy: [],
+          attachedTools: [],
+          statusConditions: [],
+        };
+        // Remove from hand
+        initialState.players.p2.hand = initialState.players.p2.hand.filter(c => c.id !== p2PokemonInHand.id);
+      }
+
+      // Award 6 prize cards to each player
+      initialState.players.p1.prizes = initialState.players.p1.deck.splice(0, 6);
+      initialState.players.p2.prizes = initialState.players.p2.deck.splice(0, 6);
+
+      // Start turn 1, player 1's turn, main phase
+      initialState.turn = 1;
+      initialState.activePlayer = 'p1';
+      initialState.phase = 'main';
+
+      setGameState(initialState);
     }
-  }, [p1Deck, p2Deck]);
+  }, [p1Deck, p2Deck, gameStarted, cardRegistry]);
 
   const botTimeoutRef = useRef<NodeJS.Timeout>();
 
