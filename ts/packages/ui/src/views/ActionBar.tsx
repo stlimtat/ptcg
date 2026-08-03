@@ -4,27 +4,40 @@ import { Action } from '@pokemon-tcg/engine';
 interface ActionBarProps {
   actions: Action[];
   onAction: (action: Action) => void;
+  cardRegistry?: Record<string, any>;
 }
 
-export const ActionBar: React.FC<ActionBarProps> = ({ actions, onAction }) => {
+export const ActionBar: React.FC<ActionBarProps> = ({ actions, onAction, cardRegistry = {} }) => {
   const getActionLabel = (action: Action) => {
+    const act = action as any;
     switch (action.type) {
       case 'endTurn':
         return 'End Turn';
-      case 'playPokemon':
-        return `Play Pokémon`;
-      case 'evolve':
-        return `Evolve`;
+      case 'playPokemon': {
+        const card = cardRegistry[act.cardId];
+        const cardName = card?.name || 'Pokémon';
+        return `Play: ${cardName}`;
+      }
+      case 'evolve': {
+        const card = cardRegistry[act.cardId];
+        const cardName = card?.name || 'Evolve';
+        return `Evolve to: ${cardName}`;
+      }
       case 'attachEnergy':
         return `Attach Energy`;
-      case 'playTrainer':
-        return `Play Trainer`;
+      case 'playTrainer': {
+        const card = cardRegistry[act.cardId];
+        const cardName = card?.name || 'Trainer';
+        return `Play: ${cardName}`;
+      }
       case 'retreat':
         return `Retreat`;
-      case 'attack':
-        return `Attack ${(action as any).attackIndex}`;
+      case 'attack': {
+        const attackName = act.attackName || `Attack`;
+        return `${attackName}`;
+      }
       default:
-        return (action as any).type;
+        return act.type;
     }
   };
 

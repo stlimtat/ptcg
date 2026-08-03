@@ -129,7 +129,7 @@ export default function App() {
 
   const botTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Bot loop: when p2 turn, auto-play random legal action
+  // Bot loop: when p2 turn, auto-play random legal action (100ms delay)
   useEffect(() => {
     if (state.activePlayer === 'p2' && state.phase !== 'gameOver') {
       botTimeoutRef.current = setTimeout(() => {
@@ -137,7 +137,7 @@ export default function App() {
         if (action) {
           dispatch(action);
         }
-      }, 500);
+      }, 100); // Fast bot response
     }
 
     return () => {
@@ -194,7 +194,7 @@ export default function App() {
             cardRegistry={cardRegistry}
             onCardClick={() => {}}
           />
-          <ActionBar actions={legal} onAction={handleAction} />
+          <ActionBar actions={legal} onAction={handleAction} cardRegistry={cardRegistry} />
         </>
       )}
 
