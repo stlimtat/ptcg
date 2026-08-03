@@ -11,6 +11,17 @@ export function legalActions(
   const legal: Action[] = [];
   const playerState = state.players[player];
 
+  // Draw phase: must draw card at start of turn (before other actions)
+  if (!playerState.hasDrawnThisTurn && state.phase === "main") {
+    const drawAction = { type: "drawCard", player } as any;
+    const drawHandler = actionRegistry.get("drawCard");
+    if (drawHandler && drawHandler.isLegal(state, drawAction)) {
+      legal.push(drawAction);
+      // In real TCG, you MUST draw before any other actions
+      return legal;
+    }
+  }
+
   // Always: endTurn
   const endTurnAction = { type: "endTurn", player } as any;
   const endTurnHandler = actionRegistry.get("endTurn");

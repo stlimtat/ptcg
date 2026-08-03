@@ -125,6 +125,9 @@ export default function App() {
       initialState.activePlayer = 'p1';
       initialState.phase = 'main';
 
+      // P1 already drew 7 cards during setup, mark as drawn
+      initialState.players.p1.hasDrawnThisTurn = true;
+
       setGameState(initialState);
     }
   }, [p1Deck, p2Deck, gameStarted, cardRegistry]);

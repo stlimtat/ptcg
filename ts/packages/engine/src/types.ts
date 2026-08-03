@@ -28,6 +28,7 @@ export interface PlayerState {
   bench: PokemonInPlay[];
   energyAttachedThisTurn: boolean;
   supporterPlayedThisTurn: boolean;
+  hasDrawnThisTurn: boolean;
 }
 
 export interface GameState {
@@ -49,6 +50,7 @@ export interface LogEntry {
 
 // Actions
 export type Action =
+  | { type: "drawCard"; player: "p1" | "p2" }
   | { type: "playPokemon"; player: "p1" | "p2"; cardId: string }
   | { type: "evolve"; player: "p1" | "p2"; targetInstanceId: string; cardId: string }
   | { type: "attachEnergy"; player: "p1" | "p2"; energyCardId: string; targetInstanceId: string }

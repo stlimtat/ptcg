@@ -31,6 +31,7 @@ export function createInitialState(
         bench: [],
         energyAttachedThisTurn: false,
         supporterPlayedThisTurn: false,
+        hasDrawnThisTurn: false,
       },
       p2: {
         deck: shuffle(p2DeckCardIds).map((cardId) => {
@@ -44,6 +45,7 @@ export function createInitialState(
         bench: [],
         energyAttachedThisTurn: false,
         supporterPlayedThisTurn: false,
+        hasDrawnThisTurn: false,
       },
     },
     log: [],

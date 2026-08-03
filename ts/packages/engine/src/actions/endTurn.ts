@@ -20,6 +20,7 @@ export const endTurnHandler: ActionHandler = {
           ...state.players[action.player],
           energyAttachedThisTurn: false,
           supporterPlayedThisTurn: false,
+          hasDrawnThisTurn: false,
         },
       },
       log: [
