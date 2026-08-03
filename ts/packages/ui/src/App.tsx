@@ -82,17 +82,35 @@ export default function App() {
       const initialState = createInitialState(p1Deck, p2Deck);
       initialState.cardRegistry = cardRegistry;
 
-      // Setup phase: draw 7 cards for each player
-      const p1Drawn = initialState.players.p1.deck.splice(0, 7);
-      const p2Drawn = initialState.players.p2.deck.splice(0, 7);
-      initialState.players.p1.hand = p1Drawn;
-      initialState.players.p2.hand = p2Drawn;
+      // Setup phase: draw 7 cards for each player with mulligan logic
+      const setupPlayer = (playerKey: 'p1' | 'p2', opponentKey: 'p1' | 'p2') => {
+        let hand = initialState.players[playerKey].deck.splice(0, 7);
+        const hasPokemon = hand.some(c => cardRegistry[c.cardId]?.type === 'pokemon');
 
-      // Set active Pokemon for each player (first Pokemon in hand)
-      const p1PokemonInHand = p1Drawn.find(c => cardRegistry[c.cardId]?.type === 'pokemon');
-      const p2PokemonInHand = p2Drawn.find(c => cardRegistry[c.cardId]?.type === 'pokemon');
+        if (!hasPokemon) {
+          // Mulligan: shuffle back and redraw, opponent +1 card
+          initialState.players[playerKey].deck.push(...hand);
+          initialState.players[playerKey].deck.sort(() => Math.random() - 0.5);
+          hand = initialState.players[playerKey].deck.splice(0, 7);
+          const opponentExtraCard = initialState.players[opponentKey].deck.splice(0, 1);
+          initialState.players[opponentKey].hand.push(...opponentExtraCard);
+        }
 
-      if (p1PokemonInHand && cardRegistry[p1PokemonInHand.cardId]) {
+        initialState.players[playerKey].hand = hand;
+      };
+
+      setupPlayer('p1', 'p2');
+      setupPlayer('p2', 'p1');
+
+      // Award 6 prize cards to each player
+      initialState.players.p1.prizes = initialState.players.p1.deck.splice(0, 6);
+      initialState.players.p2.prizes = initialState.players.p2.deck.splice(0, 6);
+
+      // Auto-select first Pokemon as active (user can play other Pokemon)
+      const p1PokemonInHand = initialState.players.p1.hand.find(c => cardRegistry[c.cardId]?.type === 'pokemon');
+      const p2PokemonInHand = initialState.players.p2.hand.find(c => cardRegistry[c.cardId]?.type === 'pokemon');
+
+      if (p1PokemonInHand) {
         initialState.players.p1.active = {
           card: p1PokemonInHand,
           damage: 0,
@@ -100,11 +118,10 @@ export default function App() {
           attachedTools: [],
           statusConditions: [],
         };
-        // Remove from hand
-        initialState.players.p1.hand = initialState.players.p1.hand.filter(c => c.id !== p1PokemonInHand.id);
+        initialState.players.p1.hand = initialState.players.p1.hand.filter(c => c !== p1PokemonInHand);
       }
 
-      if (p2PokemonInHand && cardRegistry[p2PokemonInHand.cardId]) {
+      if (p2PokemonInHand) {
         initialState.players.p2.active = {
           card: p2PokemonInHand,
           damage: 0,
@@ -112,21 +129,18 @@ export default function App() {
           attachedTools: [],
           statusConditions: [],
         };
-        // Remove from hand
-        initialState.players.p2.hand = initialState.players.p2.hand.filter(c => c.id !== p2PokemonInHand.id);
+        initialState.players.p2.hand = initialState.players.p2.hand.filter(c => c !== p2PokemonInHand);
       }
 
-      // Award 6 prize cards to each player
-      initialState.players.p1.prizes = initialState.players.p1.deck.splice(0, 6);
-      initialState.players.p2.prizes = initialState.players.p2.deck.splice(0, 6);
+      // Randomize first player (not always p1)
+      const firstPlayer = Math.random() < 0.5 ? 'p1' : 'p2';
 
-      // Start turn 1, player 1's turn, main phase
       initialState.turn = 1;
-      initialState.activePlayer = 'p1';
+      initialState.activePlayer = firstPlayer;
       initialState.phase = 'main';
 
-      // P1 already drew 7 cards during setup, mark as drawn
-      initialState.players.p1.hasDrawnThisTurn = true;
+      // First player already drew during setup
+      initialState.players[firstPlayer].hasDrawnThisTurn = true;
 
       setGameState(initialState);
     }
