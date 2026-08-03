@@ -4,6 +4,7 @@ import { Board } from './views/Board';
 import { Hand } from './views/Hand';
 import { ActionBar } from './views/ActionBar';
 import { Log } from './views/Log';
+import { DeckSelector } from './views/DeckSelector';
 import { loadCardRegistry, loadDeck, initializeData } from './utils/cardLoader';
 import { getBotAction } from './controllers/botController';
 
@@ -21,8 +22,12 @@ if (typeof (globalThis as any).crypto === 'undefined') {
 
 export default function App() {
   const [cardRegistry, setCardRegistry] = useState<any>({});
+  const [availableDecks, setAvailableDecks] = useState<string[]>(['dragapult-ex', 'zoroark-ex']);
+  const [p1DeckName, setP1DeckName] = useState<string>('');
+  const [p2DeckName, setP2DeckName] = useState<string>('');
   const [p1Deck, setP1Deck] = useState<string[]>([]);
   const [p2Deck, setP2Deck] = useState<string[]>([]);
+  const [gameStarted, setGameStarted] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   const [state, setGameState] = useState<GameState>(createInitialState([], []));
@@ -46,14 +51,6 @@ export default function App() {
           registry[card.id] = card;
         }
         setCardRegistry(registry);
-
-        const dragRes = await fetch('/decks/dragapult-ex.json');
-        const dragDeck = await dragRes.json();
-        setP1Deck(dragDeck.cards || []);
-
-        const zoroRes = await fetch('/decks/zoroark-ex.json');
-        const zoroDeck = await zoroRes.json();
-        setP2Deck(zoroDeck.cards || []);
         setLoaded(true);
       } catch (e) {
         console.error('Failed to load data:', e);
@@ -62,6 +59,22 @@ export default function App() {
     };
     loadData();
   }, []);
+
+  const handleStartGame = async () => {
+    try {
+      const p1Res = await fetch(`/decks/${p1DeckName}.json`);
+      const p1Data = await p1Res.json();
+      setP1Deck(p1Data.cards || []);
+
+      const p2Res = await fetch(`/decks/${p2DeckName}.json`);
+      const p2Data = await p2Res.json();
+      setP2Deck(p2Data.cards || []);
+
+      setGameStarted(true);
+    } catch (e) {
+      console.error('Failed to load decks:', e);
+    }
+  };
 
   // Update game state when decks are loaded
   useEffect(() => {
@@ -102,6 +115,19 @@ export default function App() {
         <h1>Pokémon TCG</h1>
         <p>Loading game data...</p>
       </div>
+    );
+  }
+
+  if (!gameStarted) {
+    return (
+      <DeckSelector
+        availableDecks={availableDecks}
+        p1Selected={p1DeckName}
+        p2Selected={p2DeckName}
+        onP1Change={setP1DeckName}
+        onP2Change={setP2DeckName}
+        onStart={handleStartGame}
+      />
     );
   }
 
