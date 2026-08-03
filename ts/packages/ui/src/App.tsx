@@ -208,12 +208,12 @@ export default function App() {
       newState.players.p1.prizes = newState.players.p1.deck.splice(0, 6);
       newState.players.p2.prizes = newState.players.p2.deck.splice(0, 6);
 
-      // Randomize first player
+      // Randomize first player, enter main phase
       const firstPlayer = Math.random() < 0.5 ? 'p1' : 'p2';
       newState.turn = 1;
       newState.activePlayer = firstPlayer;
       newState.phase = 'main';
-      // Both players draw 1 card at start of their turn
+      // Both players need to draw at start of their turn (via draw phase logic)
       newState.players.p1.hasDrawnThisTurn = false;
       newState.players.p2.hasDrawnThisTurn = false;
 
