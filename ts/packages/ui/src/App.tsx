@@ -102,7 +102,8 @@ export default function App() {
           initialState.players[opponentKey].hand.push(...opponentExtraCard);
         }
 
-        initialState.players[playerKey].hand = hand;
+        // Append to hand (don't overwrite - preserves mulligan bonus cards from opponent)
+        initialState.players[playerKey].hand.push(...hand);
       };
 
       setupPlayer('p1', 'p2');
