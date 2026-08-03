@@ -213,7 +213,9 @@ export default function App() {
       newState.turn = 1;
       newState.activePlayer = firstPlayer;
       newState.phase = 'main';
-      newState.players[firstPlayer].hasDrawnThisTurn = true;
+      // Both players draw 1 card at start of their turn
+      newState.players.p1.hasDrawnThisTurn = false;
+      newState.players.p2.hasDrawnThisTurn = false;
 
       newState.log.push({
         timestamp: Date.now(),
