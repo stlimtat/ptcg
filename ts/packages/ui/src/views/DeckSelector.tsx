@@ -17,7 +17,7 @@ export function DeckSelector({
   onP2Change,
   onStart,
 }: DeckSelectorProps) {
-  const canStart = p1Selected && p2Selected && p1Selected !== p2Selected;
+  const canStart = p1Selected && p2Selected;
 
   return (
     <div style={{
@@ -79,10 +79,6 @@ export function DeckSelector({
       >
         Start Simulation
       </button>
-
-      {p1Selected === p2Selected && p1Selected && (
-        <p style={{ color: 'red' }}>Please select different decks for each player</p>
-      )}
     </div>
   );
 }

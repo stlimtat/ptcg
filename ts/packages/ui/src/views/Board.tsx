@@ -26,7 +26,14 @@ export const Board: React.FC<BoardProps> = ({ state, cardRegistry }) => {
             {state.players.p2.active && renderPokemon(state.players.p2.active)}
           </div>
           <div>Bench: {state.players.p2.bench.map((p) => renderPokemon(p))}</div>
-          <div>Prizes: {state.players.p2.prizes.length}</div>
+          <div style={{ background: '#f0f0f0', padding: '5px', marginTop: '10px' }}>
+            <strong>Prizes ({state.players.p2.prizes.length}):</strong>
+            <div style={{ fontSize: '0.8em', color: '#666' }}>
+              {state.players.p2.prizes.map((p, i) => (
+                <div key={i}>{cardRegistry[p.cardId]?.name || p.cardId}</div>
+              ))}
+            </div>
+          </div>
         </div>
         <div>
           <h3>P1 (You)</h3>
@@ -34,7 +41,14 @@ export const Board: React.FC<BoardProps> = ({ state, cardRegistry }) => {
             {state.players.p1.active && renderPokemon(state.players.p1.active)}
           </div>
           <div>Bench: {state.players.p1.bench.map((p) => renderPokemon(p))}</div>
-          <div>Prizes: {state.players.p1.prizes.length}</div>
+          <div style={{ background: '#f0f0f0', padding: '5px', marginTop: '10px' }}>
+            <strong>Prizes ({state.players.p1.prizes.length}):</strong>
+            <div style={{ fontSize: '0.8em', color: '#666' }}>
+              {state.players.p1.prizes.map((p, i) => (
+                <div key={i}>{cardRegistry[p.cardId]?.name || p.cardId}</div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
