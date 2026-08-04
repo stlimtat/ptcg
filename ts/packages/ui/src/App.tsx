@@ -178,6 +178,25 @@ export default function App() {
     const p2BasicPokemon = getBasicPokemon(state.players.p2.hand);
     const canStart = p1SelectedActivePokemon && p2SelectedActivePokemon;
 
+    // Debug: show what's in deck and hand
+    const debugDeckInfo = () => {
+      const p1DeckCards = state.players.p1.deck.map(c => cardRegistry[c.cardId]);
+      const p1HandCards = state.players.p1.hand.map(c => cardRegistry[c.cardId]);
+      const p1DeckTypes: Record<string, number> = {};
+      const p1HandTypes: Record<string, number> = {};
+
+      p1DeckCards.forEach(c => {
+        p1DeckTypes[c?.type || 'unknown'] = (p1DeckTypes[c?.type || 'unknown'] || 0) + 1;
+      });
+      p1HandCards.forEach(c => {
+        p1HandTypes[c?.type || 'unknown'] = (p1HandTypes[c?.type || 'unknown'] || 0) + 1;
+      });
+
+      return { p1DeckTypes, p1HandTypes, p1DeckCards, p1HandCards };
+    };
+
+    const debug = debugDeckInfo();
+
     const handleSetupComplete = () => {
       // Find selected cards
       const p1SelectedCard = state.players.p1.hand.find(c => c.instanceId === p1SelectedActivePokemon);
@@ -317,6 +336,54 @@ export default function App() {
           >
             {canStart ? 'Start Game' : 'Select a Pokémon for both players'}
           </button>
+        </div>
+
+        {/* DEBUG: Show deck and hand composition */}
+        <div style={{ marginTop: '30px', padding: '15px', background: '#f5f5f5', border: '1px solid #ccc' }}>
+          <h3>🔍 DEBUG: P1 Deck & Hand Analysis</h3>
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <div>
+              <h4>Remaining Deck ({state.players.p1.deck.length} cards):</h4>
+              <div>
+                {Object.entries(debug.p1DeckTypes).map(([type, count]) => (
+                  <div key={type}>
+                    {type}: {count} cards
+                  </div>
+                ))}
+              </div>
+              <details style={{ marginTop: '10px' }}>
+                <summary>Show all deck cards</summary>
+                <div style={{ fontSize: '11px', maxHeight: '200px', overflow: 'auto' }}>
+                  {debug.p1DeckCards.map((c, i) => (
+                    <div key={i}>
+                      {c?.id} - {c?.name} ({c?.type})
+                    </div>
+                  ))}
+                </div>
+              </details>
+            </div>
+
+            <div>
+              <h4>Opening Hand ({state.players.p1.hand.length} cards):</h4>
+              <div>
+                {Object.entries(debug.p1HandTypes).map(([type, count]) => (
+                  <div key={type}>
+                    {type}: {count} cards
+                  </div>
+                ))}
+              </div>
+              <details style={{ marginTop: '10px' }}>
+                <summary>Show all hand cards</summary>
+                <div style={{ fontSize: '11px', maxHeight: '200px', overflow: 'auto' }}>
+                  {debug.p1HandCards.map((c, i) => (
+                    <div key={i}>
+                      {c?.id} - {c?.name} ({c?.type})
+                    </div>
+                  ))}
+                </div>
+              </details>
+            </div>
+          </div>
         </div>
       </div>
     );
