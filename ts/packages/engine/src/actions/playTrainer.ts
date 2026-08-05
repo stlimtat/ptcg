@@ -11,20 +11,22 @@ export const playTrainerHandler: ActionHandler = {
   isLegal(state: GameState, action: Action): boolean {
     if (action.type !== "playTrainer") return false;
 
+    const typedAction = action as Extract<Action, { type: "playTrainer" }>;
+
     // Only active player can play during main phase
-    if (action.player !== state.activePlayer) return false;
+    if (typedAction.player !== state.activePlayer) return false;
     if (state.phase !== "main") return false;
 
-    const player = state.players[action.player];
+    const player = state.players[typedAction.player];
 
     // Card must exist in hand
-    const card = player.hand.find((c) => c.cardId === action.cardId);
+    const card = player.hand.find((c) => c.cardId === typedAction.cardId);
     if (!card) return false;
 
     // Validate card is trainer type if registry available
-    // Card registry validation pending phase 9
-    if (testCardRegistry) {
-      const cardDef = testCardRegistry.get(action.cardId);
+    const registry = state.cardRegistry || testCardRegistry;
+    if (registry) {
+      const cardDef = registry instanceof Map ? registry.get(typedAction.cardId) : registry[typedAction.cardId];
       if (!cardDef || cardDef.type !== "trainer") return false;
 
       // Supporters limited to 1 per turn
@@ -38,13 +40,14 @@ export const playTrainerHandler: ActionHandler = {
 
   apply(state: GameState, action: Action): GameState {
     const typedAction = action as Extract<Action, { type: "playTrainer" }>;
-    const player = state.players[action.player];
+    const player = state.players[typedAction.player];
     const cardInstance = player.hand.find((c) => c.cardId === typedAction.cardId)!;
 
     // Determine if supporter
     let supporterPlayedThisTurn = player.supporterPlayedThisTurn;
-    if (testCardRegistry) {
-      const cardDef = testCardRegistry.get(typedAction.cardId);
+    const registry = state.cardRegistry || testCardRegistry;
+    if (registry) {
+      const cardDef = registry instanceof Map ? registry.get(typedAction.cardId) : registry[typedAction.cardId];
       if (cardDef && cardDef.type === "trainer" && cardDef.subtype === "supporter") {
         supporterPlayedThisTurn = true;
       }
