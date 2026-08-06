@@ -149,20 +149,14 @@ export default function App() {
     }
   }, [state.winner]);
 
-  // Bot loop: when p2 turn, auto-play random legal action (instant)
+  // Bot loop: when p2 turn, auto-play random legal action (immediate)
   useEffect(() => {
     if (state.activePlayer === 'p2' && state.phase !== 'gameOver') {
-      botTimeoutRef.current = setTimeout(() => {
-        const action = getBotAction(state);
-        if (action) {
-          dispatch(action);
-        }
-      }, 0); // Instant bot response
+      const action = getBotAction(state);
+      if (action) {
+        dispatch(action);
+      }
     }
-
-    return () => {
-      if (botTimeoutRef.current) clearTimeout(botTimeoutRef.current);
-    };
   }, [state.activePlayer, state.phase, state.turn]);
 
   const handleAction = (action: Action) => {
