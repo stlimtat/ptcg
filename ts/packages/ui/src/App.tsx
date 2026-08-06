@@ -1,5 +1,5 @@
 import React, { useReducer, useEffect, useRef, useState } from 'react';
-import { GameState, Action, applyAction, legalActions, createInitialState, CardInstance } from '@pokemon-tcg/engine';
+import { GameState, Action, applyAction, legalActions, createInitialState, CardInstance, GameLogger } from '@pokemon-tcg/engine';
 import { Board } from './views/Board';
 import { Hand } from './views/Hand';
 import { ActionBar } from './views/ActionBar';
@@ -42,10 +42,17 @@ export default function App() {
   const [p1SelectedActivePokemon, setP1SelectedActivePokemon] = useState<string>('');
   const [p2SelectedActivePokemon, setP2SelectedActivePokemon] = useState<string>('');
   const [setupPhase, setSetupPhase] = useState(false);
+  const loggerRef = useRef<GameLogger | null>(null);
 
   const dispatch = (action: Action) => {
     try {
-      setGameState(applyAction(state, action));
+      const newState = applyAction(state, action);
+      setGameState(newState);
+
+      // Log move if logger is initialized
+      if (loggerRef.current) {
+        loggerRef.current.logMove(state.turn, action.player, action);
+      }
     } catch (e) {
       console.error('Action failed:', e);
     }
@@ -73,11 +80,11 @@ export default function App() {
 
   const handleStartGame = async () => {
     try {
-      const p1Res = await fetch(`/decks/${p1DeckName}.json`);
+      const p1Res = await fetch(`/data/decks/${p1DeckName}.json`);
       const p1Data = await p1Res.json();
       setP1Deck(p1Data.cards || []);
 
-      const p2Res = await fetch(`/decks/${p2DeckName}.json`);
+      const p2Res = await fetch(`/data/decks/${p2DeckName}.json`);
       const p2Data = await p2Res.json();
       setP2Deck(p2Data.cards || []);
 
@@ -121,14 +128,26 @@ export default function App() {
       initialState.phase = 'setup';
       initialState.turn = 0;
 
+      // Initialize game logger
+      const gameId = `game-${Date.now()}`;
+      loggerRef.current = new GameLogger(gameId, p1DeckName, p2DeckName);
+
       setGameState(initialState);
       setSetupPhase(true);
       setP1SelectedActivePokemon('');
       setP2SelectedActivePokemon('');
     }
-  }, [p1Deck, p2Deck, gameStarted, cardRegistry]);
+  }, [p1Deck, p2Deck, gameStarted, cardRegistry, p1DeckName, p2DeckName]);
 
   const botTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Save game when it ends
+  useEffect(() => {
+    if (state.winner && loggerRef.current) {
+      loggerRef.current.endGame(state.winner);
+      loggerRef.current.saveToIndexedDB().catch(e => console.error('Failed to save game:', e));
+    }
+  }, [state.winner]);
 
   // Bot loop: when p2 turn, auto-play random legal action (instant)
   useEffect(() => {
