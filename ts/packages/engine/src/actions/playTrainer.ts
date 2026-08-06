@@ -1,4 +1,5 @@
 import { GameState, Action, ActionHandler, Card } from "../types";
+import { applyTrainerEffect } from "./trainerEffects";
 
 // Card registry lookup - set during testing to validate trainer subtypes
 let testCardRegistry: Map<string, Card> | null = null;
@@ -46,14 +47,18 @@ export const playTrainerHandler: ActionHandler = {
     // Determine if supporter
     let supporterPlayedThisTurn = player.supporterPlayedThisTurn;
     const registry = state.cardRegistry || testCardRegistry;
+    let cardName = "trainer";
     if (registry) {
       const cardDef = registry instanceof Map ? registry.get(typedAction.cardId) : registry[typedAction.cardId];
-      if (cardDef && cardDef.type === "trainer" && cardDef.subtype === "supporter") {
-        supporterPlayedThisTurn = true;
+      if (cardDef) {
+        cardName = cardDef.name;
+        if (cardDef.type === "trainer" && cardDef.subtype === "supporter") {
+          supporterPlayedThisTurn = true;
+        }
       }
     }
 
-    return {
+    let newState = {
       ...state,
       players: {
         ...state.players,
@@ -69,9 +74,14 @@ export const playTrainerHandler: ActionHandler = {
         {
           timestamp: Date.now(),
           player: action.player,
-          message: `${action.player} played trainer card`,
+          message: `${action.player} played ${cardName}`,
         },
       ],
     };
+
+    // Apply trainer effect
+    newState = applyTrainerEffect(newState, cardName, typedAction.player);
+
+    return newState;
   },
 };
