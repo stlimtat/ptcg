@@ -1,119 +1,158 @@
 import * as fs from "fs";
+import * as path from "path";
+import { fileURLToPath } from "url";
+import { chromium } from "playwright";
 
-// Scrape competitive deck lists from limitless TCG
-// Returns deck lists with proper Pokemon/Trainer/Energy mix
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+interface ScrapedDeck {
+  archetype: string;
+  player: string;
+  cards: Array<{ name: string; count: number }>;
+  placement: string;
+}
 
 async function scrapeLimitlessTCG() {
-  // Limitless TCG format lists URL
-  const formatUrl =
-    "https://www.limitless.xyz/decks/?f=standard&t=recent&p=all";
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
 
-  console.log("Fetching Limitless TCG deck lists...");
+  console.log("Loading Limitless TCG...");
+  await page.goto("https://www.limitless-tcg.com/decks/", {
+    waitUntil: "networkidle",
+  });
 
-  try {
-    // Fetch the format page
-    const response = await fetch(formatUrl);
-    const html = await response.text();
+  // Load card registry
+  const cardsPath = path.join(__dirname, "../../ui/public/cards.json");
+  if (!fs.existsSync(cardsPath)) {
+    console.error(`Cards file not found at ${cardsPath}`);
+    await browser.close();
+    return;
+  }
 
-    // Extract deck links from HTML
-    // Pattern: /decks/show/[id]
-    const deckLinkRegex = /\/decks\/show\/(\d+)/g;
-    const deckIds = new Set<string>();
-    let match;
+  const cardsData = JSON.parse(fs.readFileSync(cardsPath, "utf-8"));
+  const cardsByName: Record<string, string> = {};
 
-    while ((match = deckLinkRegex.exec(html)) !== null) {
-      deckIds.add(match[1]);
-    }
+  cardsData.forEach((card: any) => {
+    cardsByName[card.name.toLowerCase()] = card.id;
+  });
 
-    console.log(`Found ${deckIds.size} deck IDs`);
+  console.log(`Loaded ${Object.keys(cardsByName).length} cards from pool`);
 
-    // Fetch first few decks to build our deck files
-    const decksToFetch = Array.from(deckIds).slice(0, 5);
-    const decks: {
-      name: string;
-      cards: string[];
-      source: string;
-    }[] = [];
+  // Wait for decks to load
+  await page.waitForTimeout(3000);
 
-    for (const deckId of decksToFetch) {
-      const deckUrl = `https://www.limitless.xyz/decks/show/${deckId}`;
-      console.log(`Fetching deck ${deckId}...`);
+  // Extract deck links - try multiple selectors
+  let deckLinks = await page.locator('a[href*="/deck/"]').all();
+  console.log(`Found ${deckLinks.length} deck links`);
 
-      const deckRes = await fetch(deckUrl);
-      const deckHtml = await deckRes.text();
+  const decks: ScrapedDeck[] = [];
+  const maxDecks = 5;
 
-      // Parse deck name (look for <h1> or title)
-      const nameMatch = deckHtml.match(
-        /<h1[^>]*>([^<]+)<\/h1>|<title>([^<]+)<\/title>/
-      );
-      const deckName = nameMatch
-        ? (nameMatch[1] || nameMatch[2]).trim()
-        : `Deck ${deckId}`;
+  for (let i = 0; i < Math.min(deckLinks.length, maxDecks); i++) {
+    try {
+      const link = deckLinks[i];
+      const href = await link.getAttribute("href");
+      if (!href) continue;
 
-      // Parse card list
-      // Look for patterns like "4x sv1-1" or card list in data attributes
-      const cardPattern =
-        /(\d+)x\s+([a-zA-Z0-9\-]+)|data-card-id="([^"]+)"(?:[^>]*data-count="(\d+)")?/g;
-      const cardCounts: Record<string, number> = {};
+      console.log(`Processing deck ${i + 1}/${maxDecks}: ${href}`);
+      await page.goto(`https://www.limitless-tcg.com${href}`, {
+        waitUntil: "domcontentloaded",
+      });
 
-      let cardMatch;
-      while ((cardMatch = cardPattern.exec(deckHtml)) !== null) {
-        if (cardMatch[1] && cardMatch[2]) {
-          // Format: "4x sv1-1"
-          const count = parseInt(cardMatch[1]);
-          const cardId = cardMatch[2];
-          cardCounts[cardId] = (cardCounts[cardId] || 0) + count;
-        } else if (cardMatch[3]) {
-          // Format: data-card-id with data-count
-          const cardId = cardMatch[3];
-          const count = cardMatch[4] ? parseInt(cardMatch[4]) : 1;
-          cardCounts[cardId] = (cardCounts[cardId] || 0) + count;
+      // Extract deck metadata
+      const archetype = await page
+        .locator('text=/Archetype:|Deck Type:/')
+        .first()
+        .textContent()
+        .then((t) => t?.replace(/Archetype:|Deck Type:/g, "").trim() || "Unknown");
+
+      const player = await page
+        .locator('[data-testid="deck-player-name"], .player-name')
+        .first()
+        .textContent()
+        .then((t) => t?.trim() || "Unknown");
+
+      const placement = await page
+        .locator('[data-testid="deck-placement"], .placement')
+        .first()
+        .textContent()
+        .then((t) => t?.trim() || "N/A");
+
+      // Extract cards from deck list - multiple selector attempts
+      let cardRows = await page.locator('[class*="card"], [class*="Card"]').all();
+
+      const deckCards: Array<{ name: string; count: number }> = [];
+
+      for (const row of cardRows) {
+        const text = await row.textContent();
+        if (!text) continue;
+
+        // Try to parse "Card Name x2" format
+        const match = text.match(/(.+?)\s+x(\d+)/);
+        if (match) {
+          const cardName = match[1].trim();
+          const count = parseInt(match[2]);
+          if (!isNaN(count) && cardName.length > 0) {
+            deckCards.push({ name: cardName, count });
+          }
         }
       }
 
-      // Build card array (repeat cardId based on count)
-      const cards: string[] = [];
-      for (const [cardId, count] of Object.entries(cardCounts)) {
-        for (let i = 0; i < count; i++) {
-          cards.push(cardId);
+      if (deckCards.length > 0) {
+        decks.push({ archetype, player, cards: deckCards, placement });
+        console.log(`  ✓ Found ${deckCards.length} cards`);
+      }
+    } catch (e) {
+      console.log(`  ✗ Error processing deck: ${e}`);
+    }
+  }
+
+  console.log(`\nProcessed ${decks.length} decks`);
+
+  // Convert to our format
+  const outDir = path.join(__dirname, "../../../ui/public/decks");
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir, { recursive: true });
+  }
+
+  for (const deck of decks) {
+    const convertedCards: string[] = [];
+    let unmatchedCount = 0;
+
+    for (const deckCard of deck.cards) {
+      const cardId = cardsByName[deckCard.name.toLowerCase()];
+      if (cardId) {
+        for (let i = 0; i < deckCard.count; i++) {
+          convertedCards.push(cardId);
         }
+      } else {
+        unmatchedCount++;
+        console.log(`  Unmapped: ${deckCard.name}`);
       }
-
-      if (cards.length > 0) {
-        decks.push({
-          name: deckName,
-          cards: cards.slice(0, 60), // Limit to 60 cards
-          source: deckUrl,
-        });
-      }
-
-      // Avoid rate limiting
-      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    console.log(`Successfully fetched ${decks.length} decks`);
-
-    // Save decks
-    for (const deck of decks) {
-      const filename = deck.name
+    if (convertedCards.length >= 40) {
+      const filename = deck.archetype
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
 
       const deckJson = {
-        name: deck.name,
-        cards: deck.cards,
-        source: deck.source,
+        name: `${deck.archetype} (${deck.player}) - ${deck.placement}`,
+        cards: convertedCards.slice(0, 60),
+        source: `Limitless TCG`,
       };
 
-      const outPath = `./out/decks/${filename}.json`;
+      const outPath = path.join(outDir, `${filename}.json`);
       fs.writeFileSync(outPath, JSON.stringify(deckJson, null, 2));
-      console.log(`Saved: ${outPath} (${deck.cards.length} cards)`);
+      console.log(
+        `✓ Saved: ${filename}.json (${convertedCards.length} cards, ${unmatchedCount} unmapped)`
+      );
     }
-  } catch (e) {
-    console.error("Error scraping Limitless TCG:", e);
   }
+
+  await browser.close();
+  console.log("Done!");
 }
 
-// Run scraper
-scrapeLimitlessTCG();
+scrapeLimitlessTCG().catch(console.error);

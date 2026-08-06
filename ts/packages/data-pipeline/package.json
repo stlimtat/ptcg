@@ -9,7 +9,8 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@pokemon-tcg/engine": "workspace:*"
+    "@pokemon-tcg/engine": "workspace:*",
+    "playwright": "^1.40.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

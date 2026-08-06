@@ -22,7 +22,15 @@ if (typeof (globalThis as any).crypto === 'undefined') {
 
 export default function App() {
   const [cardRegistry, setCardRegistry] = useState<any>({});
-  const [availableDecks, setAvailableDecks] = useState<string[]>(['balanced-deck-1', 'balanced-deck-2', 'grass-deck', 'fire-deck']);
+  const [availableDecks, setAvailableDecks] = useState<string[]>([
+    'lugia-vstar',
+    'miraidon-ex',
+    'iron-thorns',
+    'raging-bolt',
+    'ancient-roar',
+    'balanced-deck-1',
+    'balanced-deck-2'
+  ]);
   const [p1DeckName, setP1DeckName] = useState<string>('');
   const [p2DeckName, setP2DeckName] = useState<string>('');
   const [p1Deck, setP1Deck] = useState<string[]>([]);
