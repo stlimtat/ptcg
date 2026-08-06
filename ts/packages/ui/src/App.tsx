@@ -80,11 +80,11 @@ export default function App() {
 
   const handleStartGame = async () => {
     try {
-      const p1Res = await fetch(`/data/decks/${p1DeckName}.json`);
+      const p1Res = await fetch(`/decks/${p1DeckName}.json`);
       const p1Data = await p1Res.json();
       setP1Deck(p1Data.cards || []);
 
-      const p2Res = await fetch(`/data/decks/${p2DeckName}.json`);
+      const p2Res = await fetch(`/decks/${p2DeckName}.json`);
       const p2Data = await p2Res.json();
       setP2Deck(p2Data.cards || []);
 
