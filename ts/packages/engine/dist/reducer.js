@@ -1,4 +1,4 @@
-import { actionRegistry } from "./actions";
+import { actionRegistry } from "./actions/index.js";
 export function applyAction(state, action) {
     const handler = actionRegistry.get(action.type);
     if (!handler) {

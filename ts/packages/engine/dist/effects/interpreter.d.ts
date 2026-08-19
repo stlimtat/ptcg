@@ -1,4 +1,4 @@
-import { EffectScript } from "../types";
+import { EffectScript } from "../types.js";
 export interface EffectContext {
     currentDamage: number;
     player: "p1" | "p2";

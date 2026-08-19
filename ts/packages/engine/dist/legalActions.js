@@ -1,10 +1,40 @@
-import { actionRegistry } from "./actions";
+import { actionRegistry } from "./actions/index.js";
+import { usableAbilities } from "./effects/abilities.js";
 export function legalActions(state, player) {
+    if (state.phase === "gameOver")
+        return [];
+    const playerState = state.players[player];
+    const promoteHandler = actionRegistry.get("promote");
+    // A card effect waiting on a decision: the only move is to answer it.
+    const choice = state.pendingChoice;
+    if (choice) {
+        if (choice.player !== player)
+            return [];
+        const answers = choice.options.map((instanceId) => ({ type: "choose", player, instanceId }));
+        // Optional choices can be stopped early / declined.
+        if (choice.optional)
+            answers.push({ type: "choose", player });
+        return answers;
+    }
+    // A player who owes a promotion acts out of turn, and does nothing else until
+    // an Active Pokémon is back in place.
+    if (state.pendingPromote?.length) {
+        if (!state.pendingPromote.includes(player) || !promoteHandler)
+            return [];
+        const sources = state.phase === "setup" ? playerState.hand : playerState.bench.map((p) => p.card);
+        return sources
+            .map((card) => ({ type: "promote", player, instanceId: card.instanceId }))
+            .filter((a) => promoteHandler.isLegal(state, a));
+    }
     // Only active player can take actions
     if (player !== state.activePlayer)
         return [];
+    // Attacking ends the turn: nothing but endTurn remains.
+    if (playerState.attackedThisTurn) {
+        const endTurn = { type: "endTurn", player };
+        return actionRegistry.get("endTurn")?.isLegal(state, endTurn) ? [endTurn] : [];
+    }
     const legal = [];
-    const playerState = state.players[player];
     // Draw phase: must draw card at start of turn (before other actions)
     if (!playerState.hasDrawnThisTurn && state.phase === "main") {
         const drawAction = { type: "drawCard", player };
@@ -97,13 +127,20 @@ export function legalActions(state, player) {
             }
         }
     }
-    // playTrainer: enumerate trainer cards in hand
+    // playTrainer: enumerate trainer cards in hand. Tools need a target Pokémon,
+    // so they get one action per attachable Pokémon.
     const playTrainerHandler = actionRegistry.get("playTrainer");
     if (playTrainerHandler) {
+        const targets = [playerState.active, ...playerState.bench].filter((p) => p);
         for (const card of playerState.hand) {
-            const action = { type: "playTrainer", player, cardId: card.cardId };
-            if (playTrainerHandler.isLegal(state, action)) {
-                legal.push(action);
+            const def = state.cardRegistry?.[card.cardId];
+            const isTool = def?.type === "trainer" && def.subtype === "tool";
+            const candidates = isTool
+                ? targets.map((p) => ({ type: "playTrainer", player, cardId: card.cardId, targetInstanceId: p.card.instanceId }))
+                : [{ type: "playTrainer", player, cardId: card.cardId }];
+            for (const action of candidates) {
+                if (playTrainerHandler.isLegal(state, action))
+                    legal.push(action);
             }
         }
     }
@@ -118,6 +155,19 @@ export function legalActions(state, player) {
             };
             if (retreatHandler.isLegal(state, action)) {
                 legal.push(action);
+            }
+        }
+    }
+    // useAbility: enumerate activated abilities on every Pokémon in play
+    const useAbilityHandler = actionRegistry.get("useAbility");
+    if (useAbilityHandler) {
+        for (const poke of [playerState.active, ...playerState.bench]) {
+            if (!poke)
+                continue;
+            for (const abilityName of usableAbilities(state, player, poke)) {
+                const action = { type: "useAbility", player, instanceId: poke.card.instanceId, abilityName };
+                if (useAbilityHandler.isLegal(state, action))
+                    legal.push(action);
             }
         }
     }

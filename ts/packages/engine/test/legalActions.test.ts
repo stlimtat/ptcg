@@ -89,6 +89,7 @@ describe("legalActions", () => {
   it("includes endTurn as always-legal action for active player", () => {
     let state = createInitialState(["dragapult-ex"], ["zoroark-ex"]);
     state.phase = "main";
+    state.players.p1.hasDrawnThisTurn = true; // the draw comes first
 
     const actions = legalActions(state, "p1");
     const endTurnAction = actions.find((a) => a.type === "endTurn");
@@ -109,6 +110,7 @@ describe("legalActions", () => {
   it("includes playable cards from hand during main phase", () => {
     let state = createInitialState(["dragapult-ex"], ["zoroark-ex"]);
     state.phase = "main";
+    state.players.p1.hasDrawnThisTurn = true; // the draw comes first
     state.players.p1.hand = [{ id: "dragapult-1", cardId: "dragapult-ex", instanceId: "inst-1" }];
 
     const actions = legalActions(state, "p1");
@@ -132,6 +134,8 @@ describe("legalActions", () => {
   it("enumerates all 7 action types when legal", () => {
     let state = createInitialState(["dragapult-ex"], ["zoroark-ex"]);
     state.phase = "main";
+    state.turn = 2; // the player going first may not attack on turn 1
+    state.players.p1.hasDrawnThisTurn = true; // the draw comes first
     // Active needs enough energy for attack (Dragon + Colorless)
     state.players.p1.active = {
       card: { id: "dragapult-1", cardId: "dragapult-ex", instanceId: "active-inst" },

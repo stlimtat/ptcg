@@ -1,4 +1,4 @@
-import { GameState, Action, ActionHandler } from "../types";
+import { GameState, Action, ActionHandler } from "../types.js";
 
 export const drawCardHandler: ActionHandler = {
   isLegal(state: GameState, action: Action): boolean {
@@ -6,6 +6,7 @@ export const drawCardHandler: ActionHandler = {
 
     // Only active player can draw
     if (action.player !== state.activePlayer) return false;
+    if (state.pendingPromote?.length || state.pendingChoice) return false;
 
     // Must have cards in deck
     if (state.players[action.player].deck.length === 0) return false;

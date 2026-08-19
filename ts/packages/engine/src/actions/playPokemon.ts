@@ -1,11 +1,8 @@
-import { GameState, Action, ActionHandler, Card } from "../types";
+import { GameState, Action, ActionHandler } from "../types.js";
+import { getCard } from "../cardLookup.js";
+import { benchLimit, benchPlacementDamage } from "../effects/continuous.js";
 
-// Test-friendly card registry - set during testing to validate card stages
-let testCardRegistry: Map<string, Card> | null = null;
-
-export function setCardRegistry(registry: Map<string, Card> | null) {
-  testCardRegistry = registry;
-}
+export { setCardRegistry } from "../cardLookup.js";
 
 export const playPokemonHandler: ActionHandler = {
   isLegal(state: GameState, action: Action): boolean {
@@ -14,22 +11,22 @@ export const playPokemonHandler: ActionHandler = {
     // Only active player can play during main phase
     if (action.player !== state.activePlayer) return false;
     if (state.phase !== "main") return false;
+    if (state.pendingPromote?.length) return false;
+    if (state.pendingChoice) return false;
+    if (state.players[action.player].attackedThisTurn) return false;
 
     const player = state.players[action.player];
 
-    // Bench must have space (max 5)
-    if (player.bench.length >= 5) return false;
+    // Bench must have space (a Stadium can widen it)
+    if (player.bench.length >= benchLimit(state, action.player)) return false;
 
     // Card must exist in hand
     const card = player.hand.find((c) => c.cardId === action.cardId);
     if (!card) return false;
 
-    // Validate card is basic Pokémon (stage === 0) if registry available
-    if (testCardRegistry) {
-      const cardDef = testCardRegistry.get(action.cardId);
-      if (!cardDef) return false;
-      if (cardDef.type === "pokemon" && cardDef.stage !== 0) return false;
-    }
+    // Only Basic Pokémon can be played straight to the bench
+    const cardDef = getCard(state, action.cardId);
+    if (cardDef && (cardDef.type !== "pokemon" || cardDef.stage !== 0)) return false;
 
     return true;
   },
@@ -50,10 +47,12 @@ export const playPokemonHandler: ActionHandler = {
             ...player.bench,
             {
               card: cardInstance,
-              damage: 0,
               attachedEnergy: [],
               attachedTools: [],
               statusConditions: [],
+              placedOnTurn: state.turn,
+              // Risky Ruins chips Basics as they hit the Bench.
+              damage: benchPlacementDamage(state, cardInstance.cardId),
             },
           ],
         },

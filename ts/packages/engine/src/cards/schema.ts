@@ -1,2 +1,2 @@
 // Exports already defined in types.ts
-export type { Card, Attack, Ability } from "../types";
+export type { Card, Attack, Ability } from "../types.js";

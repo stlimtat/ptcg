@@ -1,87 +1,115 @@
-import { GameState, Action, ActionHandler, Card } from "../types";
-import { applyTrainerEffect } from "./trainerEffects";
+import { GameState, Action, ActionHandler, PokemonInPlay } from "../types.js";
+import { getCard } from "../cardLookup.js";
+import { applyTrainerEffect, trainerPlayable } from "../effects/trainers.js";
 
-// Card registry lookup - set during testing to validate trainer subtypes
-let testCardRegistry: Map<string, Card> | null = null;
+export { setCardRegistry } from "../cardLookup.js";
 
-export function setCardRegistry(registry: Map<string, Card> | null) {
-  testCardRegistry = registry;
+function targetFor(state: GameState, player: "p1" | "p2", instanceId?: string): PokemonInPlay | null {
+  if (!instanceId) return null;
+  const ps = state.players[player];
+  return [ps.active, ...ps.bench].find((p) => p?.card.instanceId === instanceId) ?? null;
 }
 
 export const playTrainerHandler: ActionHandler = {
   isLegal(state: GameState, action: Action): boolean {
     if (action.type !== "playTrainer") return false;
-
-    const typedAction = action as Extract<Action, { type: "playTrainer" }>;
-
-    // Only active player can play during main phase
-    if (typedAction.player !== state.activePlayer) return false;
+    if (action.player !== state.activePlayer) return false;
     if (state.phase !== "main") return false;
+    if (state.pendingPromote?.length || state.pendingChoice) return false;
 
-    const player = state.players[typedAction.player];
+    const player = state.players[action.player];
+    if (player.attackedThisTurn) return false;
 
-    // Card must exist in hand
-    const card = player.hand.find((c) => c.cardId === typedAction.cardId);
+    const card = player.hand.find((c) => c.cardId === action.cardId);
     if (!card) return false;
 
-    // Validate card is trainer type if registry available
-    const registry = state.cardRegistry || testCardRegistry;
-    if (registry) {
-      const cardDef = registry instanceof Map ? registry.get(typedAction.cardId) : registry[typedAction.cardId];
-      if (!cardDef || cardDef.type !== "trainer") return false;
+    const cardDef = getCard(state, action.cardId);
+    if (!cardDef) return true; // unknown card: fixture-driven tests supply no registry
+    if (cardDef.type !== "trainer") return false;
 
-      // Supporters limited to 1 per turn
-      if (cardDef.subtype === "supporter" && player.supporterPlayedThisTurn) {
-        return false;
-      }
+    // An attack may have locked Items for this turn.
+    if (
+      cardDef.subtype === "item" &&
+      state.ongoing?.some((e) => e.kind === "itemLock" && e.appliesTo === action.player)
+    ) {
+      return false;
     }
+
+    // One Supporter and one Stadium per turn.
+    if (cardDef.subtype === "supporter" && player.supporterPlayedThisTurn) return false;
+    if (cardDef.subtype === "stadium") {
+      if (player.stadiumPlayedThisTurn) return false;
+      // A Stadium with the same name as the one already in play can't be played.
+      const inPlay = state.stadium && getCard(state, state.stadium.cardId);
+      if (inPlay && inPlay.name === cardDef.name) return false;
+    }
+    // Tools attach to one of your Pokémon that isn't already holding one.
+    if (cardDef.subtype === "tool") {
+      const target = targetFor(state, action.player, action.targetInstanceId);
+      if (!target || target.attachedTools.length > 0) return false;
+    }
+
+    const restriction = trainerPlayable[cardDef.name];
+    if (restriction && !restriction(state, action.player)) return false;
 
     return true;
   },
 
   apply(state: GameState, action: Action): GameState {
-    const typedAction = action as Extract<Action, { type: "playTrainer" }>;
-    const player = state.players[typedAction.player];
-    const cardInstance = player.hand.find((c) => c.cardId === typedAction.cardId)!;
+    if (action.type !== "playTrainer") return state;
+    const player = state.players[action.player];
+    const cardInstance = player.hand.find((c) => c.cardId === action.cardId)!;
+    const cardDef = getCard(state, action.cardId);
+    const cardName = cardDef?.name ?? "trainer";
+    const subtype = cardDef?.type === "trainer" ? cardDef.subtype : "item";
 
-    // Determine if supporter
-    let supporterPlayedThisTurn = player.supporterPlayedThisTurn;
-    const registry = state.cardRegistry || testCardRegistry;
-    let cardName = "trainer";
-    if (registry) {
-      const cardDef = registry instanceof Map ? registry.get(typedAction.cardId) : registry[typedAction.cardId];
-      if (cardDef) {
-        cardName = cardDef.name;
-        if (cardDef.type === "trainer" && cardDef.subtype === "supporter") {
-          supporterPlayedThisTurn = true;
-        }
-      }
-    }
-
-    let newState = {
+    let next: GameState = {
       ...state,
       players: {
         ...state.players,
         [action.player]: {
           ...player,
           hand: player.hand.filter((c) => c !== cardInstance),
-          discard: [...player.discard, cardInstance],
-          supporterPlayedThisTurn,
+          // Items and Supporters go to the discard; Tools and Stadiums stay in play.
+          discard: subtype === "tool" || subtype === "stadium" ? player.discard : [...player.discard, cardInstance],
+          supporterPlayedThisTurn: subtype === "supporter" ? true : player.supporterPlayedThisTurn,
+          stadiumPlayedThisTurn: subtype === "stadium" ? true : player.stadiumPlayedThisTurn,
         },
       },
       log: [
         ...state.log,
-        {
-          timestamp: Date.now(),
-          player: action.player,
-          message: `${action.player} played ${cardName}`,
-        },
+        { timestamp: Date.now(), player: action.player, message: `${action.player} played ${cardName}` },
       ],
     };
 
-    // Apply trainer effect
-    newState = applyTrainerEffect(newState, cardName, typedAction.player);
+    if (subtype === "tool") {
+      const attach = (p: PokemonInPlay) =>
+        p.card.instanceId === action.targetInstanceId
+          ? { ...p, attachedTools: [...p.attachedTools, cardInstance] }
+          : p;
+      const ps = next.players[action.player];
+      return {
+        ...next,
+        players: {
+          ...next.players,
+          [action.player]: { ...ps, active: ps.active ? attach(ps.active) : null, bench: ps.bench.map(attach) },
+        },
+      };
+    }
 
-    return newState;
+    if (subtype === "stadium") {
+      const ps = next.players[action.player];
+      return {
+        ...next,
+        stadium: cardInstance,
+        players: {
+          ...next.players,
+          // The Stadium it replaces is discarded.
+          [action.player]: { ...ps, discard: state.stadium ? [...ps.discard, state.stadium] : ps.discard },
+        },
+      };
+    }
+
+    return applyTrainerEffect(next, cardName, action.player);
   },
 };

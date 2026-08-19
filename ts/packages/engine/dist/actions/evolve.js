@@ -1,8 +1,6 @@
-// Card registry lookup - set during testing to validate evolution chains
-let testCardRegistry = null;
-export function setCardRegistry(registry) {
-    testCardRegistry = registry;
-}
+import { getCard } from "../cardLookup.js";
+import { canEvolveImmediately } from "../effects/continuous.js";
+export { setCardRegistry } from "../cardLookup.js";
 export const evolveHandler = {
     isLegal(state, action) {
         if (action.type !== "evolve")
@@ -11,6 +9,12 @@ export const evolveHandler = {
         if (action.player !== state.activePlayer)
             return false;
         if (state.phase !== "main")
+            return false;
+        if (state.pendingPromote?.length)
+            return false;
+        if (state.pendingChoice)
+            return false;
+        if (state.players[action.player].attackedThisTurn)
             return false;
         const player = state.players[action.player];
         // Card must exist in hand
@@ -22,11 +26,16 @@ export const evolveHandler = {
             player.bench.find((p) => p.card.instanceId === action.targetInstanceId);
         if (!target)
             return false;
-        // Validate evolution chain if registry available
-        const registry = state.cardRegistry || testCardRegistry;
-        if (registry) {
-            const evolutionCard = registry instanceof Map ? registry.get(action.cardId) : registry[action.cardId];
-            const targetCard = registry instanceof Map ? registry.get(target.card.cardId) : registry[target.card.cardId];
+        // A Pokémon cannot evolve on the turn it came into play, unless a Stadium
+        // says otherwise.
+        if (target.placedOnTurn !== undefined &&
+            target.placedOnTurn >= state.turn &&
+            !canEvolveImmediately(state, action.cardId)) {
+            return false;
+        }
+        const evolutionCard = getCard(state, action.cardId);
+        const targetCard = getCard(state, target.card.cardId);
+        if (evolutionCard || targetCard) {
             if (!evolutionCard || evolutionCard.type !== "pokemon")
                 return false;
             if (!targetCard || targetCard.type !== "pokemon")
@@ -34,8 +43,8 @@ export const evolveHandler = {
             // Evolution must be next stage
             if (evolutionCard.stage !== targetCard.stage + 1)
                 return false;
-            // Evolution must match evolvesFrom
-            if (evolutionCard.evolvesFrom !== targetCard.id)
+            // evolvesFrom names the Pokémon evolved from (test fixtures key it by id)
+            if (![targetCard.name, targetCard.id].includes(evolutionCard.evolvesFrom))
                 return false;
         }
         return true;
@@ -45,12 +54,17 @@ export const evolveHandler = {
         const player = state.players[action.player];
         const cardInstance = player.hand.find((c) => c.cardId === typedAction.cardId);
         // Find and replace target
+        // Evolving keeps damage and attachments but clears Special Conditions.
+        const evolved = (p) => ({
+            ...p,
+            card: cardInstance,
+            statusConditions: [],
+            placedOnTurn: state.turn,
+        });
         const newActive = player.active?.card.instanceId === typedAction.targetInstanceId
-            ? { ...player.active, card: cardInstance }
+            ? evolved(player.active)
             : player.active;
-        const newBench = player.bench.map((p) => p.card.instanceId === typedAction.targetInstanceId
-            ? { ...p, card: cardInstance }
-            : p);
+        const newBench = player.bench.map((p) => p.card.instanceId === typedAction.targetInstanceId ? evolved(p) : p);
         return {
             ...state,
             players: {

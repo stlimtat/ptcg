@@ -1,4 +1,4 @@
-import { ActionHandler, Card } from "../types";
-export declare function setCardRegistry(registry: Map<string, Card> | null): void;
+import { ActionHandler } from "../types.js";
+export { setCardRegistry } from "../cardLookup.js";
 export declare const playTrainerHandler: ActionHandler;
 //# sourceMappingURL=playTrainer.d.ts.map

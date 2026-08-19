@@ -6,9 +6,13 @@ interface ActionBarProps {
   actions: Action[];
   onAction: (action: Action) => void;
   cardRegistry?: Record<string, any>;
+  /** Text of the effect currently asking for a decision, if any. */
+  prompt?: string;
+  /** Resolves an instanceId to the card sitting behind it. */
+  cardForInstance?: (instanceId: string) => any;
 }
 
-export const ActionBar: React.FC<ActionBarProps> = ({ actions, onAction, cardRegistry = {} }) => {
+export const ActionBar: React.FC<ActionBarProps> = ({ actions, onAction, cardRegistry = {}, prompt, cardForInstance }) => {
   const getActionLabel = (action: Action) => {
     const act = action as any;
     switch (action.type) {
@@ -33,6 +37,13 @@ export const ActionBar: React.FC<ActionBarProps> = ({ actions, onAction, cardReg
       }
       case 'retreat':
         return `Retreat`;
+      case 'useAbility':
+        return `Ability: ${act.abilityName}`;
+      case 'promote':
+        return `Promote: ${cardForInstance?.(act.instanceId)?.name ?? 'Pokémon'}`;
+      case 'choose':
+        if (!act.instanceId) return 'Done';
+        return `Choose: ${cardForInstance?.(act.instanceId)?.name ?? act.instanceId}`;
       case 'attack': {
         const attackName = act.attackName || `Attack`;
         return `${attackName}`;
@@ -54,6 +65,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({ actions, onAction, cardReg
   return (
     <div style={{ border: '2px solid red', padding: '10px' }}>
       <h3>Actions ({actions.length})</h3>
+      {prompt && <p style={{ margin: '0 0 8px', fontWeight: 'bold' }}>{prompt}</p>}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
         {actions.map((action, i) => {
           const cardDef = getCardForAction(action);

@@ -17,7 +17,10 @@ export const Board: React.FC<BoardProps> = ({ state, cardRegistry }) => {
     >
       <div style={{ border: '1px solid black', padding: '10px', marginRight: '10px' }}>
         <div>{cardRegistry[poke.card.cardId]?.name || poke.card.cardId}</div>
-        <div>HP: {poke.damage}</div>
+        <div>
+          HP: {Math.max(0, (cardRegistry[poke.card.cardId]?.hp ?? 0) - poke.damage)}/
+          {cardRegistry[poke.card.cardId]?.hp ?? '?'}
+        </div>
         <div>Energy: {poke.attachedEnergy.length}</div>
       </div>
     </CardTooltip>

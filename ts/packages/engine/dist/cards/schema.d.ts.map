@@ -1,1 +1,1 @@
-{"version":3,"file":"schema.d.ts","sourceRoot":"","sources":["../../src/cards/schema.ts"],"names":[],"mappings":"AACA,YAAY,EAAE,IAAI,EAAE,MAAM,EAAE,OAAO,EAAE,MAAM,UAAU,CAAC"}
+{"version":3,"file":"schema.d.ts","sourceRoot":"","sources":["../../src/cards/schema.ts"],"names":[],"mappings":"AACA,YAAY,EAAE,IAAI,EAAE,MAAM,EAAE,OAAO,EAAE,MAAM,aAAa,CAAC"}

@@ -1,4 +1,4 @@
-import { EffectScript, EffectNode } from "../types";
+import { EffectScript, EffectNode } from "../types.js";
 
 export interface EffectContext {
   currentDamage: number;

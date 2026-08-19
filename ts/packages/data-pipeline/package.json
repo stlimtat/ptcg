@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "scrape": "node dist/index.js",
-    "scrape:standard": "node dist/cli.js",
+    "import:cards": "node importCards.mjs",
+    "import:decks": "node importDecks.mjs",
     "build": "tsc",
     "test": "vitest"
   },

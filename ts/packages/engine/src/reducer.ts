@@ -1,5 +1,5 @@
-import { GameState, Action } from "./types";
-import { actionRegistry } from "./actions";
+import { GameState, Action } from "./types.js";
+import { actionRegistry } from "./actions/index.js";
 
 export function applyAction(state: GameState, action: Action): GameState {
   const handler = actionRegistry.get(action.type);

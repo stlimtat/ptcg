@@ -1,11 +1,10 @@
-import { GameState, Action, ActionHandler, Card } from "../types";
+import { GameState, Action, ActionHandler } from "../types.js";
+import { effectiveRetreatCost } from "../effects/continuous.js";
 
-// Card registry lookup - set during testing to validate retreat costs
-let testCardRegistry: Map<string, Card> | null = null;
+export { setCardRegistry } from "../cardLookup.js";
 
-export function setCardRegistry(registry: Map<string, Card> | null) {
-  testCardRegistry = registry;
-}
+const retreatCostOf = (state: GameState, player: "p1" | "p2", poke: { card: { cardId: string } }) =>
+  effectiveRetreatCost(state, player, poke as any);
 
 export const retreatHandler: ActionHandler = {
   isLegal(state: GameState, action: Action): boolean {
@@ -14,8 +13,13 @@ export const retreatHandler: ActionHandler = {
     // Only active player can play during main phase
     if (action.player !== state.activePlayer) return false;
     if (state.phase !== "main") return false;
+    if (state.pendingPromote?.length) return false;
+    if (state.pendingChoice) return false;
 
     const player = state.players[action.player];
+    if (player.attackedThisTurn) return false;
+    // Only one retreat per turn
+    if (player.retreatedThisTurn) return false;
 
     // Must have active Pokémon
     if (!player.active) return false;
@@ -24,18 +28,26 @@ export const retreatHandler: ActionHandler = {
     const benchPokemon = player.bench.find((p) => p.card.instanceId === action.benchInstanceId);
     if (!benchPokemon) return false;
 
-    // Get retreat cost from active Pokémon
-    // Card registry validation pending phase 9
-    let retreatCost = 1;
-    if (testCardRegistry) {
-      const cardDef = testCardRegistry.get(player.active.card.cardId);
-      if (cardDef && cardDef.type === "pokemon") {
-        retreatCost = cardDef.retreatCost;
-      }
+    // Asleep or Paralyzed Pokémon cannot retreat
+    if (player.active.statusConditions.some((c) => c === "Asleep" || c === "Paralyzed")) return false;
+
+    // An attack may have stopped this Pokémon retreating this turn.
+    const active = player.active;
+    if (
+      state.ongoing?.some(
+        (e) =>
+          e.kind === "noRetreat" &&
+          e.appliesTo === action.player &&
+          (!e.instanceId || e.instanceId === active.card.instanceId)
+      )
+    ) {
+      return false;
     }
 
-    // Must have enough energy attached
-    if (player.active.attachedEnergy.length < retreatCost) return false;
+    // Must have enough energy attached to pay the retreat cost
+    if (player.active.attachedEnergy.length < retreatCostOf(state, action.player, player.active)) {
+      return false;
+    }
 
     return true;
   },
@@ -46,23 +58,17 @@ export const retreatHandler: ActionHandler = {
     const activeCard = player.active!;
     const benchPokemon = player.bench.find((p) => p.card.instanceId === typedAction.benchInstanceId)!;
 
-    // Get retreat cost
-    let retreatCost = 1;
-    if (testCardRegistry) {
-      const cardDef = testCardRegistry.get(activeCard.card.cardId);
-      if (cardDef && cardDef.type === "pokemon") {
-        retreatCost = cardDef.retreatCost;
-      }
-    }
+    const retreatCost = retreatCostOf(state, action.player, activeCard);
 
     // Discard energy
     const energyToDiscard = activeCard.attachedEnergy.slice(0, retreatCost);
     const remainingEnergy = activeCard.attachedEnergy.slice(retreatCost);
 
     // Update bench list: remove switched bench Pokémon, add old active
+    // Retreating clears Special Conditions from the Pokémon leaving the Active spot.
     const newBench = player.bench.map((p) =>
       p.card.instanceId === typedAction.benchInstanceId
-        ? { ...activeCard, attachedEnergy: remainingEnergy }
+        ? { ...activeCard, attachedEnergy: remainingEnergy, statusConditions: [] }
         : p
     );
 
@@ -75,6 +81,7 @@ export const retreatHandler: ActionHandler = {
           active: benchPokemon,
           bench: newBench,
           discard: [...player.discard, ...energyToDiscard],
+          retreatedThisTurn: true,
         },
       },
       log: [

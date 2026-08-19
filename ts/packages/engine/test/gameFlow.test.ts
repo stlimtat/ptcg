@@ -294,6 +294,8 @@ describe("Game Flow: Full Card Pool with Dusknoir", () => {
     // Play 5 turns
     for (let turn = 1; turn <= 5; turn++) {
       console.log(`\n--- Turn ${turn} ---`);
+      // Attacks can now knock out and end the game, which stops the exchange.
+      if (state.phase === "gameOver" || state.pendingPromote?.length) break;
 
       // P1 turn
       console.log("P1 (Dusknoir) attacks");
@@ -307,6 +309,8 @@ describe("Game Flow: Full Card Pool with Dusknoir", () => {
         throw error;
       }
 
+      if (state.phase === "gameOver" || state.pendingPromote?.length) break;
+
       // End P1 turn
       try {
         state = applyAction(state, { type: "endTurn", player: "p1" });
@@ -315,6 +319,8 @@ describe("Game Flow: Full Card Pool with Dusknoir", () => {
         console.error("P1 end turn failed:", error);
         throw error;
       }
+
+      if (state.phase === "gameOver" || state.pendingPromote?.length) break;
 
       // P2 turn
       console.log("P2 (Dragapult) attacks");
@@ -327,6 +333,8 @@ describe("Game Flow: Full Card Pool with Dusknoir", () => {
         console.error("P2 attack failed:", error);
         throw error;
       }
+
+      if (state.phase === "gameOver" || state.pendingPromote?.length) break;
 
       // End P2 turn
       try {

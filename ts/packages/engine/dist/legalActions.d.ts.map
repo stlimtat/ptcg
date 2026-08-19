@@ -1,1 +1,1 @@
-{"version":3,"file":"legalActions.d.ts","sourceRoot":"","sources":["../src/legalActions.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,SAAS,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AAG5C,wBAAgB,YAAY,CAC1B,KAAK,EAAE,SAAS,EAChB,MAAM,EAAE,IAAI,GAAG,IAAI,GAClB,MAAM,EAAE,CAqJV"}
+{"version":3,"file":"legalActions.d.ts","sourceRoot":"","sources":["../src/legalActions.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,SAAS,EAAE,MAAM,EAAE,MAAM,YAAY,CAAC;AAI/C,wBAAgB,YAAY,CAC1B,KAAK,EAAE,SAAS,EAChB,MAAM,EAAE,IAAI,GAAG,IAAI,GAClB,MAAM,EAAE,CAsMV"}

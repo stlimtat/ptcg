@@ -1,5 +1,5 @@
 /// <reference lib="dom" />
-import { Action } from "./types";
+import { Action } from "./types.js";
 
 export interface GameLog {
   gameId: string;

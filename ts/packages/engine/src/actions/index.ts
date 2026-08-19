@@ -1,12 +1,15 @@
-import type { Action, ActionHandler, GameState } from "../types";
-import { endTurnHandler } from "./endTurn";
-import { playPokemonHandler } from "./playPokemon";
-import { evolveHandler } from "./evolve";
-import { attachEnergyHandler } from "./attachEnergy";
-import { playTrainerHandler } from "./playTrainer";
-import { retreatHandler } from "./retreat";
-import { attackHandler } from "./attack";
-import { drawCardHandler } from "./drawCard";
+import type { Action, ActionHandler, GameState } from "../types.js";
+import { endTurnHandler } from "./endTurn.js";
+import { playPokemonHandler } from "./playPokemon.js";
+import { evolveHandler } from "./evolve.js";
+import { attachEnergyHandler } from "./attachEnergy.js";
+import { playTrainerHandler } from "./playTrainer.js";
+import { retreatHandler } from "./retreat.js";
+import { attackHandler } from "./attack.js";
+import { drawCardHandler } from "./drawCard.js";
+import { promoteHandler } from "./promote.js";
+import { chooseHandler } from "./choose.js";
+import { useAbilityHandler } from "./useAbility.js";
 
 export const actionRegistry = new Map<string, ActionHandler>();
 
@@ -18,3 +21,6 @@ actionRegistry.set("playTrainer", playTrainerHandler);
 actionRegistry.set("retreat", retreatHandler);
 actionRegistry.set("attack", attackHandler);
 actionRegistry.set("drawCard", drawCardHandler);
+actionRegistry.set("promote", promoteHandler);
+actionRegistry.set("choose", chooseHandler);
+actionRegistry.set("useAbility", useAbilityHandler);

@@ -1,5 +1,5 @@
 import React, { useReducer, useEffect, useRef, useState } from 'react';
-import { GameState, Action, applyAction, legalActions, createInitialState, CardInstance, GameLogger } from '@pokemon-tcg/engine';
+import { GameState, Action, applyAction, legalActions, createInitialState, startGame, CardInstance, GameLogger } from '@pokemon-tcg/engine';
 import { Board } from './views/Board';
 import { Hand } from './views/Hand';
 import { ActionBar } from './views/ActionBar';
@@ -22,15 +22,7 @@ if (typeof (globalThis as any).crypto === 'undefined') {
 
 export default function App() {
   const [cardRegistry, setCardRegistry] = useState<any>({});
-  const [availableDecks, setAvailableDecks] = useState<string[]>([
-    'lugia-vstar',
-    'miraidon-ex',
-    'iron-thorns',
-    'raging-bolt',
-    'ancient-roar',
-    'balanced-deck-1',
-    'balanced-deck-2'
-  ]);
+  const [availableDecks, setAvailableDecks] = useState<string[]>([]);
   const [p1DeckName, setP1DeckName] = useState<string>('');
   const [p2DeckName, setP2DeckName] = useState<string>('');
   const [p1Deck, setP1Deck] = useState<string[]>([]);
@@ -45,17 +37,16 @@ export default function App() {
   const loggerRef = useRef<GameLogger | null>(null);
 
   const dispatch = (action: Action) => {
-    try {
-      const newState = applyAction(state, action);
-      setGameState(newState);
-
-      // Log move if logger is initialized
-      if (loggerRef.current) {
-        loggerRef.current.logMove(state.turn, action.player, action);
+    setGameState((prev) => {
+      try {
+        const next = applyAction(prev, action);
+        loggerRef.current?.logMove(prev.turn, action.player, action);
+        return next;
+      } catch (e) {
+        console.error('Action failed:', e);
+        return prev;
       }
-    } catch (e) {
-      console.error('Action failed:', e);
-    }
+    });
   };
 
   useEffect(() => {
@@ -63,6 +54,7 @@ export default function App() {
       try {
         const cardsRes = await fetch('/cards.json');
         const cardsData = await cardsRes.json();
+        setAvailableDecks(await (await fetch('/decks/index.json')).json());
         const registry: any = {};
         const cardsList = Array.isArray(cardsData) ? cardsData : (cardsData.cards || []);
         for (const card of cardsList) {
@@ -97,40 +89,11 @@ export default function App() {
   // Update game state when decks are loaded
   useEffect(() => {
     if (p1Deck.length > 0 && p2Deck.length > 0 && gameStarted && Object.keys(cardRegistry).length > 0) {
-      const initialState = createInitialState(p1Deck, p2Deck);
-      initialState.cardRegistry = cardRegistry;
+      // Opening hands, mulligans and prizes are the engine's job; the UI only
+      // picks the Active Pokémon, through the same promote action a bot uses.
+      const initialState = startGame(p1Deck, p2Deck, cardRegistry);
 
-      // Setup phase: draw 7 cards for each player with mulligan logic (BASIC Pokemon only)
-      const setupPlayer = (playerKey: 'p1' | 'p2', opponentKey: 'p1' | 'p2') => {
-        let hand = initialState.players[playerKey].deck.splice(0, 7);
-        // Check for BASIC Pokemon only (stage 0)
-        const hasBasicPokemon = hand.some(c =>
-          cardRegistry[c.cardId]?.type === 'pokemon' && cardRegistry[c.cardId]?.stage === 0
-        );
-
-        if (!hasBasicPokemon) {
-          // Mulligan: shuffle back and redraw, opponent +1 card
-          initialState.players[playerKey].deck.push(...hand);
-          initialState.players[playerKey].deck.sort(() => Math.random() - 0.5);
-          hand = initialState.players[playerKey].deck.splice(0, 7);
-          const opponentExtraCard = initialState.players[opponentKey].deck.splice(0, 1);
-          initialState.players[opponentKey].hand.push(...opponentExtraCard);
-        }
-
-        // Append to hand (don't overwrite - preserves mulligan bonus cards from opponent)
-        initialState.players[playerKey].hand.push(...hand);
-      };
-
-      setupPlayer('p1', 'p2');
-      setupPlayer('p2', 'p1');
-
-      // Stay in setup phase - wait for players to select active Pokemon
-      initialState.phase = 'setup';
-      initialState.turn = 0;
-
-      // Initialize game logger
-      const gameId = `game-${Date.now()}`;
-      loggerRef.current = new GameLogger(gameId, p1DeckName, p2DeckName);
+      loggerRef.current = new GameLogger(`game-${Date.now()}`, p1DeckName, p2DeckName);
 
       setGameState(initialState);
       setSetupPhase(true);
@@ -151,13 +114,30 @@ export default function App() {
 
   // Bot loop: when p2 turn, auto-play random legal action (immediate)
   useEffect(() => {
-    if (state.activePlayer === 'p2' && state.phase !== 'gameOver') {
-      const action = getBotAction(state);
-      if (action) {
-        dispatch(action);
+    const owesPromotion = state.pendingPromote?.includes('p2');
+    if (state.phase === 'setup' || state.phase === 'gameOver') return;
+    if (state.activePlayer !== 'p2' && !owesPromotion) return;
+    const action = getBotAction(state);
+    if (action) dispatch(action);
+  }, [state]);
+
+  // Choice and promote actions reference cards by instanceId; find the card behind one.
+  const findInstanceCardId = (s: GameState, instanceId: string): string | undefined => {
+    for (const p of ['p1', 'p2'] as const) {
+      const ps = s.players[p];
+      for (const zone of [ps.hand, ps.deck, ps.discard, ps.prizes]) {
+        const hit = zone.find((c) => c.instanceId === instanceId);
+        if (hit) return hit.cardId;
+      }
+      for (const poke of [ps.active, ...ps.bench]) {
+        if (!poke) continue;
+        if (poke.card.instanceId === instanceId) return poke.card.cardId;
+        const attached = [...poke.attachedEnergy, ...poke.attachedTools].find((c) => c.instanceId === instanceId);
+        if (attached) return attached.cardId;
       }
     }
-  }, [state.activePlayer, state.phase, state.turn]);
+    return undefined;
+  };
 
   const handleAction = (action: Action) => {
     // Override player to ensure it's p1
@@ -219,52 +199,9 @@ export default function App() {
     const debug = debugDeckInfo();
 
     const handleSetupComplete = () => {
-      // Find selected cards
-      const p1SelectedCard = state.players.p1.hand.find(c => c.instanceId === p1SelectedActivePokemon);
-      const p2SelectedCard = state.players.p2.hand.find(c => c.instanceId === p2SelectedActivePokemon);
-
-      if (!p1SelectedCard || !p2SelectedCard) return;
-
-      // Create new state with active Pokemon set
-      const newState = { ...state };
-      newState.players.p1.active = {
-        card: p1SelectedCard,
-        damage: 0,
-        attachedEnergy: [],
-        attachedTools: [],
-        statusConditions: [],
-      };
-      newState.players.p1.hand = newState.players.p1.hand.filter(c => c !== p1SelectedCard);
-
-      newState.players.p2.active = {
-        card: p2SelectedCard,
-        damage: 0,
-        attachedEnergy: [],
-        attachedTools: [],
-        statusConditions: [],
-      };
-      newState.players.p2.hand = newState.players.p2.hand.filter(c => c !== p2SelectedCard);
-
-      // Award 6 prize cards to each player
-      newState.players.p1.prizes = newState.players.p1.deck.splice(0, 6);
-      newState.players.p2.prizes = newState.players.p2.deck.splice(0, 6);
-
-      // Randomize first player, enter main phase
-      const firstPlayer = Math.random() < 0.5 ? 'p1' : 'p2';
-      newState.turn = 1;
-      newState.activePlayer = firstPlayer;
-      newState.phase = 'main';
-      // Both players need to draw at start of their turn (via draw phase logic)
-      newState.players.p1.hasDrawnThisTurn = false;
-      newState.players.p2.hasDrawnThisTurn = false;
-
-      newState.log.push({
-        timestamp: Date.now(),
-        player: firstPlayer,
-        message: `Setup complete. ${firstPlayer} goes first.`,
-      });
-
-      setGameState(newState);
+      if (!p1SelectedActivePokemon || !p2SelectedActivePokemon) return;
+      dispatch({ type: 'promote', player: 'p1', instanceId: p1SelectedActivePokemon });
+      dispatch({ type: 'promote', player: 'p2', instanceId: p2SelectedActivePokemon });
       setSetupPhase(false);
     };
 
@@ -429,7 +366,13 @@ export default function App() {
             cardRegistry={cardRegistry}
             onCardClick={() => {}}
           />
-          <ActionBar actions={legal} onAction={handleAction} cardRegistry={cardRegistry} />
+          <ActionBar
+            actions={legal}
+            onAction={handleAction}
+            cardRegistry={cardRegistry}
+            prompt={state.pendingChoice?.prompt}
+            cardForInstance={(id) => cardRegistry[findInstanceCardId(state, id) ?? '']}
+          />
         </>
       )}
 

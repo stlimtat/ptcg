@@ -1,11 +1,7 @@
-import { GameState, Action, ActionHandler, Card } from "../types";
+import { GameState, Action, ActionHandler } from "../types.js";
+import { getCard } from "../cardLookup.js";
 
-// Card registry lookup - set during testing to validate energy types
-let testCardRegistry: Map<string, Card> | null = null;
-
-export function setCardRegistry(registry: Map<string, Card> | null) {
-  testCardRegistry = registry;
-}
+export { setCardRegistry } from "../cardLookup.js";
 
 export const attachEnergyHandler: ActionHandler = {
   isLegal(state: GameState, action: Action): boolean {
@@ -17,6 +13,9 @@ export const attachEnergyHandler: ActionHandler = {
     // Only active player can play during main phase
     if (action.player !== state.activePlayer) return false;
     if (state.phase !== "main") return false;
+    if (state.pendingPromote?.length) return false;
+    if (state.pendingChoice) return false;
+    if (state.players[action.player].attackedThisTurn) return false;
 
     const player = state.players[action.player];
 
@@ -24,12 +23,9 @@ export const attachEnergyHandler: ActionHandler = {
     const card = player.hand.find((c) => c.cardId === action.energyCardId);
     if (!card) return false;
 
-    // Validate card is energy type if registry available
-    const registry = state.cardRegistry || testCardRegistry;
-    if (registry) {
-      const cardDef = registry instanceof Map ? registry.get(action.energyCardId) : registry[action.energyCardId];
-      if (!cardDef || cardDef.type !== "energy") return false;
-    }
+    // Must actually be an Energy card
+    const cardDef = getCard(state, action.energyCardId);
+    if (cardDef && cardDef.type !== "energy") return false;
 
     // Find target in bench or active
     const target =

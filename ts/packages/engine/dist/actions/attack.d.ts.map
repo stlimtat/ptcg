@@ -1,1 +1,1 @@
-{"version":3,"file":"attack.d.ts","sourceRoot":"","sources":["../../src/actions/attack.ts"],"names":[],"mappings":"AAAA,OAAO,EAAqB,aAAa,EAAE,IAAI,EAAe,MAAM,UAAU,CAAC;AAK/E,wBAAgB,eAAe,CAAC,QAAQ,EAAE,GAAG,CAAC,MAAM,EAAE,IAAI,CAAC,GAAG,IAAI,QAEjE;AAoCD,eAAO,MAAM,aAAa,EAAE,aA8F3B,CAAC"}
+{"version":3,"file":"attack.d.ts","sourceRoot":"","sources":["../../src/actions/attack.ts"],"names":[],"mappings":"AAAA,OAAO,EAAqB,aAAa,EAAE,MAAM,aAAa,CAAC;AAI/D,OAAO,EAAE,eAAe,EAAE,MAAM,kBAAkB,CAAC;AAEnD,eAAO,MAAM,aAAa,EAAE,aAwD3B,CAAC"}

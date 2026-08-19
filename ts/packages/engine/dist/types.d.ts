@@ -1,5 +1,6 @@
 export type PokemonType = "Grass" | "Fire" | "Water" | "Lightning" | "Psychic" | "Fighting" | "Darkness" | "Metal" | "Fairy" | "Dragon" | "Colorless";
 export type StatusCondition = "Confused" | "Asleep" | "Paralyzed" | "Poisoned" | "Burned";
+export type Player = "p1" | "p2";
 export interface CardInstance {
     id: string;
     cardId: string;
@@ -11,6 +12,7 @@ export interface PokemonInPlay {
     attachedEnergy: CardInstance[];
     attachedTools: CardInstance[];
     statusConditions: StatusCondition[];
+    placedOnTurn?: number;
 }
 export interface PlayerState {
     deck: CardInstance[];
@@ -22,6 +24,12 @@ export interface PlayerState {
     energyAttachedThisTurn: boolean;
     supporterPlayedThisTurn: boolean;
     hasDrawnThisTurn: boolean;
+    attackedThisTurn?: boolean;
+    retreatedThisTurn?: boolean;
+    stadiumPlayedThisTurn?: boolean;
+    /** "<instanceId>:<abilityName>" entries, cleared at end of turn. */
+    abilitiesUsedThisTurn?: string[];
+    koedLastTurn?: boolean;
 }
 export interface GameState {
     turn: number;
@@ -32,6 +40,20 @@ export interface GameState {
     log: LogEntry[];
     cardRegistry?: Record<string, Card>;
     stadium?: CardInstance;
+    pendingPromote?: ("p1" | "p2")[];
+    rngSeed?: number;
+    pendingChoice?: import("./effects/choice.js").PendingChoice;
+    /**
+     * "During your opponent's next turn, …" restrictions. Each entry is cleared
+     * when the player it applies to finishes their next turn.
+     */
+    ongoing?: OngoingEffect[];
+}
+export interface OngoingEffect {
+    kind: "itemLock" | "noRetreat" | "noAttack";
+    appliesTo: Player;
+    /** Restricted to one Pokémon, when the text names the Defending Pokémon. */
+    instanceId?: string;
 }
 export interface LogEntry {
     timestamp: number;
@@ -70,6 +92,19 @@ export type Action = {
     attackIndex: number;
     targetInstanceId?: string;
 } | {
+    type: "promote";
+    player: "p1" | "p2";
+    instanceId: string;
+} | {
+    type: "choose";
+    player: "p1" | "p2";
+    instanceId?: string;
+} | {
+    type: "useAbility";
+    player: "p1" | "p2";
+    instanceId: string;
+    abilityName: string;
+} | {
     type: "endTurn";
     player: "p1" | "p2";
 };
@@ -94,13 +129,15 @@ export type Card = {
         reduce: 30;
     };
     retreatCost: number;
+    prizeValue?: number;
     abilities: Ability[];
     attacks: Attack[];
 } | {
     type: "energy";
     id: string;
     name: string;
-    providesType: PokemonType | "any";
+    /** A list when the card provides a choice of types, e.g. Team Rocket's Energy. */
+    providesType: PokemonType | "any" | (PokemonType | "any")[];
     special?: EffectScript;
 } | {
     type: "trainer";
@@ -111,12 +148,19 @@ export type Card = {
 };
 export interface Ability {
     name: string;
+    /** Printed rules text, compiled by effects/abilities.ts. */
+    text?: string;
+    kind?: string;
     effect: EffectScript;
 }
 export interface Attack {
     name: string;
     cost: PokemonType[];
     baseDamage: number;
+    /** Printed rules text, compiled by effects/attackText.ts. */
+    text?: string;
+    /** "+" or "×" suffix on the printed damage. */
+    damageModifier?: string | null;
     effect?: EffectScript;
     requiresTarget?: boolean;
 }

@@ -658,6 +658,7 @@ describe("Attack action", () => {
   it("performs attack with sufficient energy", () => {
     let state = createInitialState(["bulbasaur"], ["charmander"]);
     state.phase = "main";
+    state.turn = 2; // the player going first may not attack on turn 1
     state.players.p1.active = {
       card: { id: "bulbasaur-1", cardId: "bulbasaur", instanceId: "p1-active-inst" },
       damage: 0,
